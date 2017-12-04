@@ -1,0 +1,56 @@
+---
+title: "Lab 4: Reducing Crime"
+author: "Sullivan Swift, Jayanth Srinivasa"
+date: "December 4, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Just putting together the inital structure laid out in the lab assignment
+```
+
+## 1. Introduction
+
+## 2. Initial exploratory analysis
+
+Detect any anomalies, including missing values, top-coded or bottom-
+coded variables, etc.
+
+## 3. Model Building Process
+
+supported by exploratory analysis. Your EDA should be interspersed with,
+and support, your modeling decisions. In particular, you should use exploratory techniques to address
+. What transformations to apply to variables and what new variables should be created.
+. What variables should be included in each model
+. Whether model assumptions are met
+
+## 4. Three model specifications
+
+One model with only the explanatory variables of key interest (possibly transformed, as determined by
+your EDA), and no other covariates.
+. One model that includes key explanatory variables and only covariates that you believe increase the
+accuracy of your results without introducing bias (for example, you should not include outcome variables
+that will absorb some of the causal effect you are interested in). This model should strike a balance
+between accuracy and parsimony and reflect your best understanding of the determinants of crime.
+. One model that includes the previous covariates, and most, if not all, other covariates. A key purpose
+of this model is to demonstrate the robustness of your results to model specification.
+
+## 5. Test 6 CLM
+
+For additional models, you
+should check all assumptions, but only highlight major differences from your first model in your report.
+
+## 6. Well formatted regression table (Stargazer?)
+
+Make sure that standard errors
+presented in this table are valid. Also, be sure to comment on both statistical and practical significance.
+
+## 7. Discussion of Causality
+
+In particular, include a discussion of what variables are not included
+in your analysis and the likely direction of omitted variable bias. Highlight any coefficients you find
+that appear to have the wrong sign from a causal perspective, and explain why this is the case.
+
+## 8. Brief Conclusion with high-level takeaways
