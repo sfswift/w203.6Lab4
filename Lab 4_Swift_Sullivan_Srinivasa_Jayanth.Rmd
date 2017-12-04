@@ -41,7 +41,13 @@ of this model is to demonstrate the robustness of your results to model specific
 
 For additional models, you
 should check all assumptions, but only highlight major differences from your first model in your report.
-
+1. Linear Model
+2. Random Sample
+3. No perfect colinearity
+4. Zero Conditional mean
+4'. Exogeneity (I don't think we need to worry about this one?)
+5. Homoskedasticity
+6. IID normal error
 ## 6. Well formatted regression table (Stargazer?)
 
 Make sure that standard errors
