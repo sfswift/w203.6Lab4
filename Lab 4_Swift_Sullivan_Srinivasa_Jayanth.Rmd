@@ -18,6 +18,69 @@ knitr::opts_chunk$set(echo = TRUE)
 Detect any anomalies, including missing values, top-coded or bottom-
 coded variables, etc.
 
+```{r}
+#set working directory
+setwd("C:/Users/Sullivan/Dropbox/W203/Lab 4")
+
+#load the data
+crime <- read.csv("crime.csv")
+
+#Exploratory data analysis
+#data overall
+head(crime)
+summary(crime)
+
+#county
+summary(crime$county)
+hist(crime$county)
+
+#crimerate
+summary(crime$crmrte)
+hist(crime$crmrte)
+#long right tail
+
+#police per capita
+summary(crime$polpc)
+hist(crime$polpc)
+#extreme outlier on the right
+
+#density per sq mile
+summary(crime$density)
+hist(crime$density)
+#abrupt cut off on the right at 0, try log
+summary(log(crime$density))
+hist(log(crime$density))
+#better but still not entirely normal
+#n > 30, not gonna worry about it
+
+#counties seems like too many numbers to use
+#will try west/central or urban as on identifiers 
+table(crime$west)
+table(crime$central)
+table(crime$urban)
+#well those numbers aren't equal
+#I just don't feel like we can ignore different areas in the state 
+
+#tax revenue per capita
+summary(crime$taxpc)
+hist(crime$taxpc)
+#outlier to the far right, wtf - wonder if it's the same county
+
+#pctmin80 - might be too far back in time? or that's a concern anyway
+summary(crime$pctmin80)
+hist(crime$pctmin80)
+
+#pctymle - % young male
+summary(crime$pctymle)
+hist(crime$pctymale)
+
+#leaving out prison sentences and mix - they seem like the outcome variables mentioned below
+
+#correlations and scatterplots
+(c <- with(crime, cor(cbind(crmrte, polpc, density, taxpc, pctmin80, pctymle))))
+#density and crime rate are the only ones super correlated (.73), crime rate and tax per capita are .45, which isn't bad but isn't great. density x taxpc = .32
+```
+
 ## 3. Model Building Process
 
 supported by exploratory analysis. Your EDA should be interspersed with,
@@ -34,13 +97,10 @@ and support, your modeling decisions. In particular, you should use exploratory 
 One model with only the explanatory variables of key interest (possibly transformed, as determined by
 your EDA), and no other covariates.
 
-. One model that includes key explanatory variables and only covariates that you believe increase the
-accuracy of your results without introducing bias (for example, you should not include outcome variables
-that will absorb some of the causal effect you are interested in). This model should strike a balance
-between accuracy and parsimony and reflect your best understanding of the determinants of crime.
+. One model that includes key explanatory variables and only covariates that you believe increase the accuracy of your results without introducing bias (for example, you should not include outcome variables
+that will absorb some of the causal effect you are interested in). This model should strike a balance between accuracy and parsimony and reflect your best understanding of the determinants of crime.
 
-. One model that includes the previous covariates, and most, if not all, other covariates. A key purpose
-of this model is to demonstrate the robustness of your results to model specification.
+. One model that includes the previous covariates, and most, if not all, other covariates. A key purpose of this model is to demonstrate the robustness of your results to model specification.
 
 ## 5. Test 6 CLM
 
