@@ -8,6 +8,11 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+library(car)
+library(lmtest)
+library(sandwich)
+library(stargazer)
+
 #Just putting together the inital structure laid out in the lab assignment
 ```
 
@@ -17,6 +22,17 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Detect any anomalies, including missing values, top-coded or bottom-
 coded variables, etc.
+
+Model Building Process is supported by exploratory analysis. Your EDA should be interspersed with, and support, your modeling decisions. In particular, you should use exploratory techniques to address
+
+. What transformations to apply to variables and what new variables should be created.
+
+. What variables should be included in each model
+
+1. log(density), polpc
+2. 
+
+. Whether model assumptions are met
 
 ```{r}
 #set working directory
@@ -77,31 +93,28 @@ hist(crime$pctymale)
 #leaving out prison sentences and mix - they seem like the outcome variables mentioned below
 
 #correlations and scatterplots
-(c <- with(crime, cor(cbind(crmrte, polpc, density, taxpc, pctmin80, pctymle))))
+#I'm not like totally sure if we need to check log(density) in these
+(c <- with(crime, cor(cbind(crmrte, polpc, density, log(density), taxpc, pctmin80, pctymle))))
 #density and crime rate are the only ones super correlated (.73), crime rate and tax per capita are .45, which isn't bad but isn't great. density x taxpc = .32
+
+scatterplotMatrix(crime[,c('crmrte', 'polpc', 'density', 'taxpc', 'pctmin80', 'pctymle')])
 ```
 
-## 3. Model Building Process
-
-supported by exploratory analysis. Your EDA should be interspersed with,
-and support, your modeling decisions. In particular, you should use exploratory techniques to address
-
-. What transformations to apply to variables and what new variables should be created.
-
-. What variables should be included in each model
-
-. Whether model assumptions are met
 
 ## 4. Three model specifications
 
-One model with only the explanatory variables of key interest (possibly transformed, as determined by
-your EDA), and no other covariates.
-
-. One model that includes key explanatory variables and only covariates that you believe increase the accuracy of your results without introducing bias (for example, you should not include outcome variables
-that will absorb some of the causal effect you are interested in). This model should strike a balance between accuracy and parsimony and reflect your best understanding of the determinants of crime.
-
+One model with only the explanatory variables of key interest (possibly transformed, as determined by your EDA), and no other covariates.
+```{r}
+#1. crmrte ~ log(density) + polpc
+```
+. One model that includes key explanatory variables and only covariates that you believe increase the accuracy of your results without introducing bias (for example, you should not include outcome variables that will absorb some of the causal effect you are interested in). This model should strike a balance between accuracy and parsimony and reflect your best understanding of the determinants of crime.
+```{r}
+#2. crmrte ~ log(density) + polpc + pctymle
+```
 . One model that includes the previous covariates, and most, if not all, other covariates. A key purpose of this model is to demonstrate the robustness of your results to model specification.
-
+```{r}
+#3. crmrte ~ log(density) + polpc + pctymle + pctmin80 + taxpc + (maybe something location wise? the wages maybe? <- need to do EDA for wages)
+```
 ## 5. Test 6 CLM
 
 For additional models, you
@@ -117,6 +130,28 @@ should check all assumptions, but only highlight major differences from your fir
 ## 6. Well formatted regression table (Stargazer?)
 
 Make sure that standard errors presented in this table are valid. Also, be sure to comment on both statistical and practical significance.
+
+```{r}
+
+#1. Linear
+
+# 2. Random sampling
+durbinWatsonTest(model)
+
+#3. no perfect multicolinearity
+(c <- with(crime, cor(cbind(crmrte, polpc, density, log(density), taxpc, pctmin80, pctymle))))
+
+# 4. Zero-conditional mean
+plot(model)
+
+#fitted v redisuals
+
+#5. homoskedasticity
+# scale location plot
+
+# 6. IID normal error, hist of residuals, qqplot of residuals
+#plot(model)
+```
 
 ## 7. Discussion of Causality
 
