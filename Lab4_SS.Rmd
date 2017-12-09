@@ -32,9 +32,46 @@ variable <- c("county",
               "west",
               "central",
               "urban",
-              "")
+              "pctmin80",
+              "wcon",
+              "wtuc",
+              "wtrd",
+              "wfir",
+              "wser",
+              "wmfg",
+              "wfed",
+              "wsta",
+              "wloc",
+              "mix",
+              "pctymle")
 
-desc <- 
+label <- c("county identifier",
+           "1987",
+           "crimes committed per person",
+           "‘probability’ of arrest",
+           "‘probability’ of conviction",
+           "‘probability’ of prison sentence",
+           "avg. sentence, days",
+           "police per capita ",
+           "people per sq. mile",
+           "tax revenue per capital",
+           "=1 if in western N.C.",
+           "=1 if in central N.C.",
+           "=1 if in SMSA",
+           "perc. minority, 1980",
+           "weekly wage, construction",
+           "wkly wge, trns, util, commun",
+           "wkly wge, whlesle, retail trade",
+           "wkly wge, fin, ins, real est",
+           "wkly wge, service industry",
+           "wkly wge, manufacturing",
+           "wkly wge, fed employees",
+           "wkly wge, state employees",
+           "wkly wge, local gov emps",
+           "offense mix: face-to-face/other",
+           "percent young male")
+
+desc <- data.frame(variable, label)
 ```
 
 ## 1. Introduction
@@ -43,32 +80,23 @@ To address questions regarding the determinants of crime in North Carolina in 19
 
 ```{r}
 #list the variables
-
+desc
 nrow(crime)
+summary(crime) #No null values
 ```
 
+We chose to examine variables `crmrte`, `polpc`, `density`, `taxpc`, `pctmin80`, and `pctymle` [SS/JS: ADD OTHER VARIABLES]. First, we removed performed a high level analysis to assess the quality of our data.
 
-
-## 2. Initial exploratory analysis
-
-Detect any anomalies, including missing values, top-coded or bottom-
-coded variables, etc.
-
-Model Building Process is supported by exploratory analysis. Your EDA should be interspersed with, and support, your modeling decisions. In particular, you should use exploratory techniques to address
-
-. What transformations to apply to variables and what new variables should be created.
-
-. What variables should be included in each model
-
-1. log(density), polpc
-2. 
-
-. Whether model assumptions are met
+```{r, include=FALSE}
+#Check for NAs
+C <- crime
+filter = !is.na(C$crmrte) | !is.na(C$polpc) | !is.na(C$density) | !is.na(C$taxpc) | !is.na(C$pctmin80) | !is.na(C$pctymle)
+C = C[filter,]
+summary(C)
+nrow(C)
+```
 
 ```{r}
-#Exploratory data analysis
-#data overall
-head(crime)
 summary(crime)
 
 #county
@@ -117,6 +145,26 @@ hist(crime$pctymale)
 
 #leaving out prison sentences and mix - they seem like the outcome variables mentioned below
 
+#should add the wage and arrest/conviction 
+```
+
+## 2. Initial exploratory analysis
+
+Detect any anomalies, including missing values, top-coded or bottom-
+coded variables, etc.
+
+Model Building Process is supported by exploratory analysis. Your EDA should be interspersed with, and support, your modeling decisions. In particular, you should use exploratory techniques to address
+
+. What transformations to apply to variables and what new variables should be created.
+
+. What variables should be included in each model
+
+1. log(density), polpc
+2. 
+
+. Whether model assumptions are met
+
+```{r}
 #correlations and scatterplots
 #I'm not like totally sure if we need to check log(density) in these
 (c <- with(crime, cor(cbind(crmrte, polpc, density, log(density), taxpc, pctmin80, pctymle))))
