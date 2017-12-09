@@ -18,6 +18,8 @@ library(stargazer)
 
 ## 1. Introduction
 
+To address questions regarding the determinants of crime in North Carolina in 1987, we conducted an analysis of the state's crime rate and possible related varaibles, including density per square mile, tax revune per capita, and more. In this report, we detail and assess the accuracy of, or fit, several potential models for examining crime rate in North Carolina. 
+
 ## 2. Initial exploratory analysis
 
 Detect any anomalies, including missing values, top-coded or bottom-
