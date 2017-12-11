@@ -3,8 +3,8 @@ title: 'Lab 4: Reducing Crime'
 author: "Sullivan Swift, Jayanth Srinivasa"
 date: "December 4, 2017"
 output:
-  word_document: default
   pdf_document: default
+  word_document: default
   html_document:
     df_print: paged
 ---
@@ -145,14 +145,14 @@ hist(crime$med_wag, breaks=50,
      main="Histogram of Median Wages")
 ```
 
-We then analyzed tax paid per capita (`taxpc`) and median wage (`med_wag`). 
-
-need to make some argument here about how they are potentially measuring too much of the same thing.
+We then analyzed tax paid per capita (`taxpc`) and median wage (`med_wag`). We were concerned that these two variables have too much overlap in effect - wages are likely a very similar measure to the tax revenue per capita. After looking at the histograms of these two variables, we chose `med_wage` over `taxpc` because it is closer to a normal distribution.
 
 ```{r}
 summary(crime$pctmin80)
 hist(crime$pctmin80, breaks=50,
      main="Histogram of Percent Minority in 1980")
+
+summary(crime$pctmin80)
 hist(log(crime$pctmin80), breaks=50,
      main="Histogram of Percent Minority in 1980")
 ```
@@ -160,21 +160,18 @@ hist(log(crime$pctmin80), breaks=50,
 Next, we looked at percent minority in 1980 (`pctmin80`). 
 
 ```{r}
-#pctymle - % young male
 summary(crime$pctymle)
 hist(crime$pctymle, breaks=50,
      main="Histogram of Percent Young Male")
-#values are very low - they're in a percent format
-#it increases on the .01-.1 scale 
-#no zeros, take log
+
 summary(log(crime$pctymle))
 hist(log(crime$pctymle), breaks=50,
      main="Histogram of log(pctymle)")
-#slightly more normal
+
 crime$log_pctymle <- log(crime$pctymle)
 ```
 
-`pctymle` appears to be the decimal format of a percentage. 
+Then we examined the percentage of young males variable (`pctymle`). The values were all very small, between .06 and .25, and it appears to be in a decimal percentage format. `pctymle` also has a right skew. We address the skew, we transformed `pctymle` with a log. Using a log transformation we can also more easily interpret `pctymle` below in our models. 
 
 ```{r}
 summary(crime$prbarr)
@@ -182,9 +179,7 @@ hist(log(crime$prbarr), breaks=50,
      main="Histogram of Probability of Arrest")
 ```
 
-Addressing the linearity assumption, the models we create below are linear in nature, so we meet this assumption.
-
-Our sample appears to be nearly the entire population, and we ran into no NA values above. North Carolina has 100 counties, and our dataset contains 90. It contains enough of the population for us to make/bypass? the assumption of random sampling.
+Lastly, we examined the probability of arrest (`prbarr`). It has a nice, normal distribution, and we saw no need to transform this variable.
 
 ```{r}
 scatterplotMatrix(crime[,c('crmrte', 'density', 'med_wag', 'taxpc', 'pctmin80', 'pctymle', 'prbarr')])
@@ -192,47 +187,51 @@ scatterplotMatrix(crime[,c('crmrte', 'density', 'med_wag', 'taxpc', 'pctmin80', 
 (c <- with(crime, cor(cbind(crmrte, density, log_density, med_wag, taxpc, pctmin80, pctymle,log_pctymle, prbarr))))
 ```
 
-We examined a scatterplot matrix and a correlation matrix to assess the next assumption, no perfect multicollinearity. None of the variables we examined have a perfect correlation. Density has a fairly strong correlation with the `crmrte`, and so we used `density` as a key variable in our models below. We chose to include `med_wag`, but not `taxpc`. We chose to include pctmin80, and the transformation log(`pctymle`) over pctymle. 
+Finally we examined a scatterplot matrix and correlation matrix to quickly assess the relationships between our variables. None of the variables we examined have a perfect correlation. Density has a fairly strong correlation with the `crmrte`, and so we used `density` as a key variable in our models below. We chose to include `med_wag`, but not `taxpc`. We chose to include pctmin80, and the transformation log(`pctymle`) over `pctymle`. We can use this correlation matrix to confirm MLR3, no perfect multicollinearity.
 
-We chose to use XYZ variables in the modeling analysis
+## Modeling Crime Rate and Addressing Assumptions
 
-## Modeling Crime Rate
+Addressing MLR1, the linearity assumption, the models we create below are linear in nature, so we meet this assumption.
 
-One model with only the explanatory variables of key interest (possibly transformed, as determined by your EDA), and no other covariates.
+Our sample appears to be nearly the entire population, and we ran into no NA values above. North Carolina has 100 counties, and our dataset contains 90. It contains enough of the population for us to assume MLR2, the assumption of random sampling.
+
+We addressed MLR3 above.
+
+We defined our first model hoping to keep to chose one or two key variables. We settled on log(`crmrte`) ~ log(`density`), as the more densely populated an area, the opportunity for crime to occur increases both from increased individuals and increased property in an area. Above we also see that `density` has a strong, positive correlation with `crmrte`.
+
 ```{r}
-#SS
-#1. log(crmrte) ~ log(density)
 (model1 <- lm(log(crmrte) ~ log(density), data=crime))
 plot(model1)
-#check the assumptions the graphs do
 
-#Using errors robust to heteroskedasticity - for stargazer
 (se.model1 = sqrt(diag(vcovHC(model1))))
 
 # 4'. Exo/Endogeneity
-plot(model1, which=1)
-plot(model1, which=5)
 (cov(log(crime$density), model1$residuals))
 #There is a very, very small correlation, indicating we can assume exogeneity.
 
 # 4. Zero-conditional mean
 #fitted v redisuals
 #There is no evidence of a violation of this assumption, the red spline line very close to 0
-
+plot(model1, which=1)
 
 #5. homoskedasticity
 # scale location plot
 # we can't assume homoskedasticity because 
 #band of the residuals v fitted: fairly consistent but there are few data points on the extremes
 #There is a small amount of edivdence for a violation, we will be cautious and use hetreoskedastic robust SE
+plot(model1, which=3)
+plot(model1, which=5)
 
 # 6. IID normal error, hist of residuals, qqplot of residuals
 #plot(model)
+plot(model1, which=2)
 hist(model1$residuals, breaks = 100)
 #normal, supporting IID
 #qq plot, fairly normal except in extremes
 ```
-. One model that includes key explanatory variables and only covariates that you believe increase the accuracy of your results without introducing bias (for example, you should not include outcome variables that will absorb some of the causal effect you are interested in). This model should strike a balance between accuracy and parsimony and reflect your best understanding of the determinants of crime.
+
+
+
 ```{r}
 #SS
 #2. log(crmrte) ~ log(density) + mpercent young males + pencent minority in 1980
