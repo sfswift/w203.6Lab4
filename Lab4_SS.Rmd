@@ -83,10 +83,9 @@ desc <- data.frame(variable, label)
 To address questions regarding the determinants of crime in North Carolina in 1987, we conducted an analysis of the state's crime rate and possible related varaibles, including the following:
 
 ```{r}
-#list the variables
 desc
 nrow(crime)
-summary(crime) #No null values
+summary(crime)
 ```
 
 We examined variables crime rate (`crmrte`), density per square mile (`density`), tax revenue per capita (`taxpc`), percent minority in 1980 (`pctmin80`), percent young male (`pctymle`), and probability of arrest (`prbarr`) as our main variables of interest. First, we performed a high level analysis to assess the quality of our data. We also wanted to examine wage data, so we calculated the median weekly wage (`med_wag`) for each county.
