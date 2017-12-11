@@ -201,36 +201,52 @@ We defined our first model hoping to keep to chose one or two key variables. We 
 
 ```{r}
 (model1 <- lm(log(crmrte) ~ log(density), data=crime))
-plot(model1)
+```
 
-(se.model1 = sqrt(diag(vcovHC(model1))))
+First, we create the model (`model1`) and examine its coefficients. For each 1% increase in `density`, there is a .49% increase in `crmrte`. Here we also set up the standard errors that are robust to hetreoskedasticity.
 
-# 4'. Exo/Endogeneity
-(cov(log(crime$density), model1$residuals))
-#There is a very, very small correlation, indicating we can assume exogeneity.
+```{r}
+cov(crime$log_density, model1$residuals)
+```
 
-# 4. Zero-conditional mean
-#fitted v redisuals
-#There is no evidence of a violation of this assumption, the red spline line very close to 0
+There is a very small relationship between `log_density` and `model1`'s residuals. This supports exogeneity. 
+
+```{r}
 plot(model1, which=1)
+```
 
-#5. homoskedasticity
-# scale location plot
-# we can't assume homoskedasticity because 
-#band of the residuals v fitted: fairly consistent but there are few data points on the extremes
-#There is a small amount of edivdence for a violation, we will be cautious and use hetreoskedastic robust SE
+Next we examine the Residuals v Fitted plot to assess MRL4, the zero-conditional mean assumption. We see that the red spline line is very close to zero through the whole graph. The exception is the small uptick on the far left, but this is likely due to few data points.
+
+```{r}
 plot(model1, which=3)
-plot(model1, which=5)
 
+# Breusch-Pagan-Test
+bptest(model1)
+# Score-test for non-constant error variance
+ncvTest(model1)
+
+se.model1 = sqrt(diag(vcovHC(model1)))
+```
+
+To assess MLR5, the homoskedasticity assumption, we look at the Residuals v Fitted plot above, as well as the Scale-Location plot. On both plots, the band of data points narrows as we move right on the graphs, providing evidience of a violation of homoskedasticity. Further supporting this violation, the Breusch-Pagan test and the Score-test both have significant p-values (bptest, p = .01; score-test, p =.005). Our sample is $n>30$, however the sample is not extremely large. We will use the robust standard errors we have produced above to address the posibility of heteroskedasticity.
+
+```{r}
+plot(model1, which=5)
+```
+
+Throughout out analysis above, we noticed there was at least one quite large outlier. Here we will look at the Residuals v Leverage plot to determine if we need to remove this outlier. The outlier does not appear to have any sizable bearing on `model1`, so we may leave it in our analysis.
+
+```{r}
 # 6. IID normal error, hist of residuals, qqplot of residuals
 #plot(model)
+#original SE
 plot(model1, which=2)
 hist(model1$residuals, breaks = 100)
 #normal, supporting IID
 #qq plot, fairly normal except in extremes
 ```
 
-
+When assessing MLR6, we examine the Q-Q plot of the model. Here, we can see that the data closely hugs the diagonal, indicating normal residuals. The histogram of the residuals also supports this conclusion. Both charts a few values on the extremes that vary, but on the whole support MLR6.
 
 ```{r}
 #SS
