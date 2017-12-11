@@ -1,0 +1,292 @@
+[1mdiff --git a/Lab 4_Swift_Sullivan_Srinivasa_Jayanth_SS.Rmd b/Lab 4_Swift_Sullivan_Srinivasa_Jayanth_SS.Rmd[m
+[1mdeleted file mode 100644[m
+[1mindex ecaecfb..0000000[m
+[1m--- a/Lab 4_Swift_Sullivan_Srinivasa_Jayanth_SS.Rmd[m	
+[1m+++ /dev/null[m
+[36m@@ -1,162 +0,0 @@[m
+[31m----[m
+[31m-title: "Lab 4: Reducing Crime"[m
+[31m-author: "Sullivan Swift, Jayanth Srinivasa"[m
+[31m-date: "December 4, 2017"[m
+[31m-output: pdf_document[m
+[31m----[m
+[31m-[m
+[31m-```{r setup, include=FALSE}[m
+[31m-knitr::opts_chunk$set(echo = TRUE)[m
+[31m-[m
+[31m-library(car)[m
+[31m-library(lmtest)[m
+[31m-library(sandwich)[m
+[31m-library(stargazer)[m
+[31m-[m
+[31m-#Just putting together the inital structure laid out in the lab assignment[m
+[31m-```[m
+[31m-[m
+[31m-## 1. Introduction[m
+[31m-[m
+[31m-To address questions regarding the determinants of crime in North Carolina in 1987, we conducted an analysis of the state's crime rate and possible related varaibles, including density per square mile, tax revune per capita, and more. In this report, we detail and assess the accuracy of, or fit, several potential models for examining crime rate in North Carolina. [m
+[31m-[m
+[31m-## 2. Initial exploratory analysis[m
+[31m-[m
+[31m-Detect any anomalies, including missing values, top-coded or bottom-[m
+[31m-coded variables, etc.[m
+[31m-[m
+[31m-Model Building Process is supported by exploratory analysis. Your EDA should be interspersed with, and support, your modeling decisions. In particular, you should use exploratory techniques to address[m
+[31m-[m
+[31m-. What transformations to apply to variables and what new variables should be created.[m
+[31m-[m
+[31m-. What variables should be included in each model[m
+[31m-[m
+[31m-1. log(density), polpc[m
+[31m-2. [m
+[31m-[m
+[31m-. Whether model assumptions are met[m
+[31m-[m
+[31m-```{r}[m
+[31m-#set working directory[m
+[31m-setwd("C:/Users/Sullivan/Dropbox/W203/Lab 4")[m
+[31m-[m
+[31m-#load the data[m
+[31m-crime <- read.csv("crime.csv")[m
+[31m-[m
+[31m-#Exploratory data analysis[m
+[31m-#data overall[m
+[31m-head(crime)[m
+[31m-summary(crime)[m
+[31m-[m
+[31m-#county[m
+[31m-summary(crime$county)[m
+[31m-hist(crime$county)[m
+[31m-[m
+[31m-#crimerate[m
+[31m-summary(crime$crmrte)[m
+[31m-hist(crime$crmrte)[m
+[31m-#long right tail[m
+[31m-[m
+[31m-#police per capita[m
+[31m-summary(crime$polpc)[m
+[31m-hist(crime$polpc)[m
+[31m-#extreme outlier on the right[m
+[31m-[m
+[31m-#density per sq mile[m
+[31m-summary(crime$density)[m
+[31m-hist(crime$density)[m
+[31m-#abrupt cut off on the right at 0, try log[m
+[31m-summary(log(crime$density))[m
+[31m-hist(log(crime$density))[m
+[31m-#better but still not entirely normal[m
+[31m-#n > 30, not gonna worry about it[m
+[31m-[m
+[31m-#counties seems like too many numbers to use[m
+[31m-#will try west/central or urban as on identifiers [m
+[31m-table(crime$west)[m
+[31m-table(crime$central)[m
+[31m-table(crime$urban)[m
+[31m-#well those numbers aren't equal[m
+[31m-#I just don't feel like we can ignore different areas in the state [m
+[31m-[m
+[31m-#tax revenue per capita[m
+[31m-summary(crime$taxpc)[m
+[31m-hist(crime$taxpc)[m
+[31m-#outlier to the far right, wtf - wonder if it's the same county[m
+[31m-[m
+[31m-#pctmin80 - might be too far back in time? or that's a concern anyway[m
+[31m-summary(crime$pctmin80)[m
+[31m-hist(crime$pctmin80)[m
+[31m-[m
+[31m-#pctymle - % young male[m
+[31m-summary(crime$pctymle)[m
+[31m-hist(crime$pctymale)[m
+[31m-[m
+[31m-#leaving out prison sentences and mix - they seem like the outcome variables mentioned below[m
+[31m-[m
+[31m-#correlations and scatterplots[m
+[31m-#I'm not like totally sure if we need to check log(density) in these[m
+[31m-(c <- with(crime, cor(cbind(crmrte, polpc, density, log(density), taxpc, pctmin80, pctymle))))[m
+[31m-#density and crime rate are the only ones super correlated (.73), crime rate and tax per capita are .45, which isn't bad but isn't great. density x taxpc = .32[m
+[31m-[m
+[31m-scatterplotMatrix(crime[,c('crmrte', 'polpc', 'density', 'taxpc', 'pctmin80', 'pctymle')])[m
+[31m-```[m
+[31m-[m
+[31m-[m
+[31m-## 4. Three model specifications[m
+[31m-[m
+[31m-One model with only the explanatory variables of key interest (possibly transformed, as determined by your EDA), and no other covariates.[m
+[31m-```{r}[m
+[31m-#1. crmrte ~ log(density) + polpc[m
+[31m-```[m
+[31m-. One model that includes key explanatory variables and only covariates that you believe increase the accuracy of your results without introducing bias (for example, you should not include outcome variables that will absorb some of the causal effect you are interested in). This model should strike a balance between accuracy and parsimony and reflect your best understanding of the determinants of crime.[m
+[31m-```{r}[m
+[31m-#2. crmrte ~ log(density) + polpc + pctymle[m
+[31m-```[m
+[31m-. One model that includes the previous covariates, and most, if not all, other covariates. A key purpose of this model is to demonstrate the robustness of your results to model specification.[m
+[31m-```{r}[m
+[31m-#3. crmrte ~ log(density) + polpc + pctymle + pctmin80 + taxpc + (maybe something location wise? the wages maybe? <- need to do EDA for wages)[m
+[31m-```[m
+[31m-## 5. Test 6 CLM[m
+[31m-[m
+[31m-For additional models, you[m
+[31m-should check all assumptions, but only highlight major differences from your first model in your report.[m
+[31m-1. Linear Model[m
+[31m-2. Random Sample[m
+[31m-3. No perfect colinearity[m
+[31m-4. Zero Conditional mean[m
+[31m-4'. Exogeneity (I don't think we need to worry about this one?)[m
+[31m-5. Homoskedasticity[m
+[31m-6. IID normal error[m
+[31m-[m
+[31m-## 6. Well formatted regression table (Stargazer?)[m
+[31m-[m
+[31m-Make sure that standard errors presented in this table are valid. Also, be sure to comment on both statistical and practical significance.[m
+[31m-[m
+[31m-```{r}[m
+[31m-[m
+[31m-#1. Linear[m
+[31m-[m
+[31m-# 2. Random sampling[m
+[31m-durbinWatsonTest(model)[m
+[31m-[m
+[31m-#3. no perfect multicolinearity[m
+[31m-(c <- with(crime, cor(cbind(crmrte, polpc, density, log(density), taxpc, pctmin80, pctymle))))[m
+[31m-[m
+[31m-# 4. Zero-conditional mean[m
+[31m-plot(model)[m
+[31m-[m
+[31m-#fitted v redisuals[m
+[31m-[m
+[31m-#5. homoskedasticity[m
+[31m-# scale location plot[m
+[31m-[m
+[31m-# 6. IID normal error, hist of residuals, qqplot of residuals[m
+[31m-#plot(model)[m
+[31m-```[m
+[31m-[m
+[31m-## 7. Discussion of Causality[m
+[31m-[m
+[31m-In particular, include a discussion of what variables are not included in your analysis and the likely direction of omitted variable bias. Highlight any coefficients you find that appear to have the wrong sign from a causal perspective, and explain why this is the case.[m
+[31m-[m
+[31m-## 8. Brief Conclusion with high-level takeaways[m
+[1mdiff --git a/Lab4_SS.Rmd b/Lab4_SS.Rmd[m
+[1mindex 12d9243..34486ae 100644[m
+[1m--- a/Lab4_SS.Rmd[m
+[1m+++ b/Lab4_SS.Rmd[m
+[36m@@ -32,9 +32,46 @@[m [mvariable <- c("county",[m
+               "west",[m
+               "central",[m
+               "urban",[m
+[31m-              "")[m
+[31m-[m
+[31m-desc <- [m
+[32m+[m[32m              "pctmin80",[m[41m[m
+[32m+[m[32m              "wcon",[m[41m[m
+[32m+[m[32m              "wtuc",[m[41m[m
+[32m+[m[32m              "wtrd",[m[41m[m
+[32m+[m[32m              "wfir",[m[41m[m
+[32m+[m[32m              "wser",[m[41m[m
+[32m+[m[32m              "wmfg",[m[41m[m
+[32m+[m[32m              "wfed",[m[41m[m
+[32m+[m[32m              "wsta",[m[41m[m
+[32m+[m[32m              "wloc",[m[41m[m
+[32m+[m[32m              "mix",[m[41m[m
+[32m+[m[32m              "pctymle")[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32mlabel <- c("county identifier",[m[41m[m
+[32m+[m[32m           "1987",[m[41m[m
+[32m+[m[32m           "crimes committed per person",[m[41m[m
+[32m+[m[32m           "'probability' of arrest",[m[41m[m
+[32m+[m[32m           "'probability' of conviction",[m[41m[m
+[32m+[m[32m           "'probability' of prison sentence",[m[41m[m
+[32m+[m[32m           "avg. sentence, days",[m[41m[m
+[32m+[m[32m           "police per capita ",[m[41m[m
+[32m+[m[32m           "people per sq. mile",[m[41m[m
+[32m+[m[32m           "tax revenue per capital",[m[41m[m
+[32m+[m[32m           "=1 if in western N.C.",[m[41m[m
+[32m+[m[32m           "=1 if in central N.C.",[m[41m[m
+[32m+[m[32m           "=1 if in SMSA",[m[41m[m
+[32m+[m[32m           "perc. minority, 1980",[m[41m[m
+[32m+[m[32m           "weekly wage, construction",[m[41m[m
+[32m+[m[32m           "wkly wge, trns, util, commun",[m[41m[m
+[32m+[m[32m           "wkly wge, whlesle, retail trade",[m[41m[m
+[32m+[m[32m           "wkly wge, fin, ins, real est",[m[41m[m
+[32m+[m[32m           "wkly wge, service industry",[m[41m[m
+[32m+[m[32m           "wkly wge, manufacturing",[m[41m[m
+[32m+[m[32m           "wkly wge, fed employees",[m[41m[m
+[32m+[m[32m           "wkly wge, state employees",[m[41m[m
+[32m+[m[32m           "wkly wge, local gov emps",[m[41m[m
+[32m+[m[32m           "offense mix: face-to-face/other",[m[41m[m
+[32m+[m[32m           "percent young male")[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32mdesc <- data.frame(variable, label)[m[41m[m
+ ```[m
+ [m
+ ## 1. Introduction[m
+[36m@@ -43,32 +80,23 @@[m [mTo address questions regarding the determinants of crime in North Carolina in 19[m
+ [m
+ ```{r}[m
+ #list the variables[m
+[31m-[m
+[32m+[m[32mdesc[m[41m[m
+ nrow(crime)[m
+[32m+[m[32msummary(crime) #No null values[m[41m[m
+ ```[m
+ [m
+[32m+[m[32mWe chose to examine variables `crmrte`, `polpc`, `density`, `taxpc`, `pctmin80`, and `pctymle` [SS/JS: ADD OTHER VARIABLES]. First, we removed performed a high level analysis to assess the quality of our data.[m[41m[m
+ [m
+[31m-[m
+[31m-## 2. Initial exploratory analysis[m
+[31m-[m
+[31m-Detect any anomalies, including missing values, top-coded or bottom-[m
+[31m-coded variables, etc.[m
+[31m-[m
+[31m-Model Building Process is supported by exploratory analysis. Your EDA should be interspersed with, and support, your modeling decisions. In particular, you should use exploratory techniques to address[m
+[31m-[m
+[31m-. What transformations to apply to variables and what new variables should be created.[m
+[31m-[m
+[31m-. What variables should be included in each model[m
+[31m-[m
+[31m-1. log(density), polpc[m
+[31m-2. [m
+[31m-[m
+[31m-. Whether model assumptions are met[m
+[32m+[m[32m```{r, include=FALSE}[m[41m[m
+[32m+[m[32m#Check for NAs[m[41m[m
+[32m+[m[32mC <- crime[m[41m[m
+[32m+[m[32mfilter = !is.na(C$crmrte) | !is.na(C$polpc) | !is.na(C$density) | !is.na(C$taxpc) | !is.na(C$pctmin80) | !is.na(C$pctymle)[m[41m[m
+[32m+[m[32mC = C[filter,][m[41m[m
+[32m+[m[32msummary(C)[m[41m[m
+[32m+[m[32mnrow(C)[m[41m[m
+[32m+[m[32m```[m[41m[m
+ [m
+ ```{r}[m
+[31m-#Exploratory data analysis[m
+[31m-#data overall[m
+[31m-head(crime)[m
+ summary(crime)[m
+ [m
+ #county[m
+[36m@@ -116,7 +144,25 @@[m [msummary(crime$pctymle)[m
+ hist(crime$pctymale)[m
+ [m
+ #leaving out prison sentences and mix - they seem like the outcome variables mentioned below[m
+[32m+[m[32m```[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m## 2. Initial exploratory analysis[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32mDetect any anomalies, including missing values, top-coded or bottom-[m[41m[m
+[32m+[m[32mcoded variables, etc.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32mModel Building Process is supported by exploratory analysis. Your EDA should be interspersed with, and support, your modeling decisions. In particular, you should use exploratory techniques to address[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m. What transformations to apply to variables and what new variables should be created.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m. What variables should be included in each model[m[41m[m
+ [m
+[32m+[m[32m1. log(density), polpc[m[41m[m
+[32m+[m[32m2.[m[41m [m
+[32m+[m[41m[m
+[32m+[m[32m. Whether model assumptions are met[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m```{r}[m[41m[m
+ #correlations and scatterplots[m
+ #I'm not like totally sure if we need to check log(density) in these[m
+ (c <- with(crime, cor(cbind(crmrte, polpc, density, log(density), taxpc, pctmin80, pctymle))))[m

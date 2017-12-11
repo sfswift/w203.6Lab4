@@ -48,13 +48,13 @@ variable <- c("county",
 label <- c("county identifier",
            "1987",
            "crimes committed per person",
-           "‘probability’ of arrest",
-           "‘probability’ of conviction",
-           "‘probability’ of prison sentence",
+           "`probability` of arrest",
+           "`probability` of conviction",
+           "`probability` of prison sentence",
            "avg. sentence, days",
            "police per capita ",
            "people per sq. mile",
-           "tax revenue per capital",
+           "tax revenue per capita",
            "=1 if in western N.C.",
            "=1 if in central N.C.",
            "=1 if in SMSA",
@@ -74,7 +74,7 @@ label <- c("county identifier",
 desc <- data.frame(variable, label)
 ```
 
-## 1. Introduction
+## 1. Introduction and Exploratory Analysis
 
 To address questions regarding the determinants of crime in North Carolina in 1987, we conducted an analysis of the state's crime rate and possible related varaibles, including the following:
 
@@ -85,141 +85,117 @@ nrow(crime)
 summary(crime) #No null values
 ```
 
-We examined variables `crmrte`, `polpc`, `density`, `taxpc`, `pctmin80`, and `pctymle` [SS/JS: ADD OTHER VARIABLES]. First, we performed a high level analysis to assess the quality of our data.
+We examined variables crime rate (`crmrte`), density per square mile (`density`), tax revenue per capita (`taxpc`), percent minority in 1980 (`pctmin80`), percent young male (`pctymle`), and probability of arrest (`prbarr`) as our main variables of interest. First, we performed a high level analysis to assess the quality of our data. We also wanted to examine wage data, so we calculated the median weekly wage (`med_wag`) for each county.
 
 ```{r, include=FALSE}
-#Check for NAs UPDATE
+crime$med_wag <- apply(crime[,(16:24)],1, median, na.rm = TRUE)
+
 C <- crime
-filter = !is.na(C$crmrte) | !is.na(C$polpc) | !is.na(C$density) | !is.na(C$taxpc) | !is.na(C$pctmin80) | !is.na(C$pctymle)
+filter = !is.na(C$crmrte) | !is.na(C$density) | !is.na(C$taxpc) | !is.na(C$pctmin80) | !is.na(C$pctymle) | !is.na(C$med_wag)
 C = C[filter,]
 summary(C)
 nrow(C)
-```
 
-
-
-```{r}
-#SS
-summary(crime)
-
-#county
-summary(crime$county)
-hist(crime$county)
-
-#crimerate
-summary(crime$crmrte)
-hist(crime$crmrte)
-#long right tail
-summary(log(crime$crmrte))
-hist(log(crime$crmrte))
-#makes it more normal
-
-#police per capita
-summary(crime$polpc)
-hist(crime$polpc)
-#extreme outlier on the right
-
-#density per sq mile
-summary(crime$density)
-hist(crime$density)
-#abrupt cut off on the right at 0, try log
-summary(log(crime$density))
-hist(log(crime$density))
-#better but still not entirely normal
-#n > 30, not gonna worry about it
-
-#counties seems like too many numbers to use
-#will try west/central or urban as on identifiers 
 table(crime$west)
 table(crime$central)
 table(crime$urban)
-#well those numbers aren't equal
-#I just don't feel like we can ignore different areas in the state 
+```
 
-#tax revenue per capita
+There are no NA values. We also wanted to incorporate location into the analysis but these three variables did not create groups of even n, so we did not include location data in the analysis.
+
+```{r}
+summary(crime$crmrte)
+hist(crime$crmrte, breaks=50,
+     main="Histogram of crmrate")
+
+summary(log(crime$crmrte))
+hist(log(crime$crmrte), breaks=50,
+     main="Histogram of log(crmrte)")
+
+crime$log_crmrte <- log(crime$crmrte)
+```
+
+First we analyzed the outcome variable, crime rate(`crmrte`). In the original `crmrte` variable, the distribution is right tailed. We applied a log transformation to `crmrte`, and this variable had a more normal distribution. We chose to use the log of `crmrte` in our models below.
+
+```{r}
+summary(crime$density)
+hist(crime$density, breaks=50,
+     main="Histogram of Density per sq mile")
+
+summary(log(crime$density))
+hist(log(crime$density), breaks=50,
+     main="Histogram of log(density)")
+
+crime$log_density <- log(crime$density)
+```
+
+Next we examined density per square mile (`density`). There is a positive skew, so we again applied a log transformation. The log transformation of `density` is not quite normal, but since our $n=90$, we can rely on the Central Limit Theorem.
+
+```{r}
 summary(crime$taxpc)
-hist(crime$taxpc, breaks = 100)
-#outlier to the far right, wtf - wonder if it's the same county
+hist(crime$taxpc, breaks=50,
+     main="Histogram of Tax Paid per Capita")
 
 summary(log(crime$taxpc))
-hist(log(crime$taxpc), breaks = 100)
+hist(log(crime$taxpc), breaks = 50,
+     main="Histogram of log(taxpc)")
 
-#pctmin80 - might be too far back in time? or that's a concern anyway
+summary(crime$med_wag)
+hist(crime$med_wag, breaks=50,
+     main="Histogram of Median Wages")
+```
+
+We then analyzed tax paid per capita (`taxpc`) and median wage (`med_wag`). 
+
+need to make some argument here about how they are potentially measuring too much of the same thing.
+
+```{r}
 summary(crime$pctmin80)
-hist(crime$pctmin80)
+hist(crime$pctmin80, breaks=50,
+     main="Histogram of Percent Minority in 1980")
+hist(log(crime$pctmin80), breaks=50,
+     main="Histogram of Percent Minority in 1980")
+```
 
+Next, we looked at percent minority in 1980 (`pctmin80`). 
+
+```{r}
 #pctymle - % young male
 summary(crime$pctymle)
-hist(crime$pctymle, breaks=100)
+hist(crime$pctymle, breaks=50,
+     main="Histogram of Percent Young Male")
 #values are very low - they're in a percent format
 #it increases on the .01-.1 scale 
 #no zeros, take log
 summary(log(crime$pctymle))
-hist(log(crime$pctymle), breaks=100)
+hist(log(crime$pctymle), breaks=50,
+     main="Histogram of log(pctymle)")
 #slightly more normal
-
-## Creating a median_wage column :
-crime$med_wag <- apply(crime[,(16:24)],1, median, na.rm = TRUE)
-summary(crime$med_wag)
-hist(crime$med_wag)
-hist(log(crime$med_wag))
-
-## If we assume the probability of conviction and arrest, is a deterrent to crime we can create a new variable that gives the probability of conviction after arrest, i.e the multiple  of the probability of arrest and probability of conviction.
-crime$prbconv_prbarr <-  crime$prbarr*crime$prbconv
-summary(crime$prbconv_prbarr)
-hist(crime$prbconv_prbarr)
-
-summary(crime$prbarr)
-hist(log(crime$prbarr), breaks=100)
-summary(crime$prbconv)
-cor(crime$crmrte, crime$prbarr)
-plot(crime$prbarr, crime$crmrte)
-
-#This clearly shows us that it is skewed and if we take a log of this we get 
-crime$log_prbconv_prbarr <- log(crime$prbconv_prbarr)
-summary(crime$log_prbconv_prbarr)
-hist(crime$log_prbconv_prbarr)
-
-#leaving out prison sentences and mix - they seem like the outcome variables mentioned below
-
-#Assumptions to address
-#1. Linear
-#The models we have proposed are linear in nature.
-
-# 2. Random sampling
-#We don't need to worry about this assumption, we have the complete data set
-durbinWatsonTest(model)
-
-#3. no perfect multicolinearity
-(c <- with(crime, cor(cbind(crmrte, density, log(density), med_wag, log(med_wag), taxpc, log(taxpc), pctmin80, pctymle))))
-#We used a correlation matrix, and no two variables had a perfect correlation.
 ```
 
-## 2. Initial exploratory analysis
-
-Detect any anomalies, including missing values, top-coded or bottom-
-coded variables, etc.
-
-Model Building Process is supported by exploratory analysis. Your EDA should be interspersed with, and support, your modeling decisions. In particular, you should use exploratory techniques to address
-
-. What transformations to apply to variables and what new variables should be created.
-
-. What variables should be included in each model
-
-. Whether model assumptions are met
+`pctymle` appears to be the decimal format of a percentage. 
 
 ```{r}
-#SS
-#correlations and scatterplots
-#I'm not like totally sure if we need to check log(density) in these
-(c <- with(crime, cor(cbind(crmrte, density, log(density), med_wag, log(med_wag), taxpc, log(taxpc), pctmin80, pctymle))))
-#density and crime rate are the only ones super correlated (.73), crime rate and tax per capita are .45, which isn't bad but isn't great. density x taxpc = .32
-
-scatterplotMatrix(crime[,c('crmrte', 'polpc', 'density', 'med_wag', 'taxpc', 'pctmin80', 'pctymle')])
+summary(crime$prbarr)
+hist(log(crime$prbarr), breaks=50,
+     main="Histogram of Probability of Arrest")
 ```
 
+Addressing the linearity assumption, the models we create below are linear in nature, so we meet this assumption.
 
-## 4. Three model specifications
+Our sample appears to be nearly the entire population, and we ran into no NA values above. North Carolina has 100 counties, and our dataset contains 90. It contains enough of the population for us to make/bypass? the assumption of random sampling.
+
+```{r}
+scatterplotMatrix(crime[,c('crmrte', 'density', 'med_wag', 'taxpc', 'pctmin80', 'pctymle', 'prbarr')])
+
+(c <- with(crime, cor(cbind(crmrte, density, log_density, med_wag, taxpc, log_taxpc, pctmin80, pctymle,log_pctymle, prbarr))))
+```
+
+We examined a scatterplot matrix and a correlation matrix to assess the next assumption, no perfect multicollinearity. None of the variables we examined have a perfect correlation. Density has a fairly strong correlation with the `crmrte`, and so we used `density` as a key variable in our models below. We chose to include `med_wag`, but not `taxpc`. We chose to include pctmin80, and the transformation log(`pctymle`) over pctymle. 
+
+We chose to use XYZ variables in the modeling analysis
+
+## Modeling Crime Rate
 
 One model with only the explanatory variables of key interest (possibly transformed, as determined by your EDA), and no other covariates.
 ```{r}
