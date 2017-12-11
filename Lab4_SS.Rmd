@@ -85,7 +85,7 @@ nrow(crime)
 summary(crime) #No null values
 ```
 
-We chose to examine variables `crmrte`, `polpc`, `density`, `taxpc`, `pctmin80`, and `pctymle` [SS/JS: ADD OTHER VARIABLES]. First, we removed performed a high level analysis to assess the quality of our data.
+We examined variables `crmrte`, `polpc`, `density`, `taxpc`, `pctmin80`, and `pctymle` [SS/JS: ADD OTHER VARIABLES]. First, we performed a high level analysis to assess the quality of our data.
 
 ```{r, include=FALSE}
 #Check for NAs UPDATE
@@ -96,7 +96,10 @@ summary(C)
 nrow(C)
 ```
 
+
+
 ```{r}
+#SS
 summary(crime)
 
 #county
@@ -147,7 +150,13 @@ hist(crime$pctmin80)
 
 #pctymle - % young male
 summary(crime$pctymle)
-hist(crime$pctymale)
+hist(crime$pctymle, breaks=100)
+#values are very low - they're in a percent format
+#it increases on the .01-.1 scale 
+#no zeros, take log
+summary(log(crime$pctymle))
+hist(log(crime$pctymle), breaks=100)
+#slightly more normal
 
 ## Creating a median_wage column :
 crime$med_wag <- apply(crime[,(16:24)],1, median, na.rm = TRUE)
@@ -175,12 +184,15 @@ hist(crime$log_prbconv_prbarr)
 
 #Assumptions to address
 #1. Linear
+#The models we have proposed are linear in nature.
 
 # 2. Random sampling
+#We don't need to worry about this assumption, we have the complete data set
 durbinWatsonTest(model)
 
 #3. no perfect multicolinearity
-(c <- with(crime, cor(cbind(crmrte, polpc, density, log(density), taxpc, pctmin80, pctymle))))
+(c <- with(crime, cor(cbind(crmrte, density, log(density), med_wag, log(med_wag), taxpc, log(taxpc), pctmin80, pctymle))))
+#We used a correlation matrix, and no two variables had a perfect correlation.
 ```
 
 ## 2. Initial exploratory analysis
@@ -197,6 +209,7 @@ Model Building Process is supported by exploratory analysis. Your EDA should be 
 . Whether model assumptions are met
 
 ```{r}
+#SS
 #correlations and scatterplots
 #I'm not like totally sure if we need to check log(density) in these
 (c <- with(crime, cor(cbind(crmrte, density, log(density), med_wag, log(med_wag), taxpc, log(taxpc), pctmin80, pctymle))))
@@ -210,6 +223,7 @@ scatterplotMatrix(crime[,c('crmrte', 'polpc', 'density', 'med_wag', 'taxpc', 'pc
 
 One model with only the explanatory variables of key interest (possibly transformed, as determined by your EDA), and no other covariates.
 ```{r}
+#SS
 #1. log(crmrte) ~ log(density)
 (model1 <- lm(log(crmrte) ~ log(density), data=crime))
 plot(model1)
@@ -219,22 +233,33 @@ plot(model1)
 (se.model1 = sqrt(diag(vcovHC(model1))))
 
 # 4'. Exo/Endogeneity
+plot(model1, which=1)
+plot(model1, which=5)
+(cov(log(crime$density), model1$residuals))
+#There is a very, very small correlation, indicating we can assume exogeneity.
 
 # 4. Zero-conditional mean
-plot(model)
-
 #fitted v redisuals
+#There is no evidence of a violation of this assumption, the red spline line very close to 0
+
 
 #5. homoskedasticity
 # scale location plot
+# we can't assume homoskedasticity because 
+#band of the residuals v fitted: fairly consistent but there are few data points on the extremes
+#There is a small amount of edivdence for a violation, we will be cautious and use hetreoskedastic robust SE
 
 # 6. IID normal error, hist of residuals, qqplot of residuals
 #plot(model)
+hist(model1$residuals, breaks = 100)
+#normal, supporting IID
+#qq plot, fairly normal except in extremes
 ```
 . One model that includes key explanatory variables and only covariates that you believe increase the accuracy of your results without introducing bias (for example, you should not include outcome variables that will absorb some of the causal effect you are interested in). This model should strike a balance between accuracy and parsimony and reflect your best understanding of the determinants of crime.
 ```{r}
-#2. log(crmrte) ~ log(density) + med_wage
-(model2 <- lm(log(crmrte) ~ log(density) + pctymle + pctmin80, data=crime))
+#SS
+#2. log(crmrte) ~ log(density) + mpercent young males + pencent minority in 1980
+(model2 <- lm(log(crmrte) ~ log(density) + log(pctymle) + pctmin80, data=crime))
 plot(model2)
 #check the assumptions the graphs do
 
@@ -242,22 +267,35 @@ plot(model2)
 (se.model2 = sqrt(diag(vcovHC(model2))))
 
 # 4'. Exo/Endogeneity
+plot(model2, which=1)
+plot(model2, which=5)
+(cov(log(crime$density), model2$residuals))
+(cov(log(crime$pctymle), model2$residuals))
+(cov(crime$pctmin80, model2$residuals))
+#There is a very, very small correlation, indicating we can assume exogeneity.
 
 # 4. Zero-conditional mean
-plot(model)
-
 #fitted v redisuals
+#There is no evidence of a violation of this assumption, the red spline line very close to 0 - same as model 1
+
 
 #5. homoskedasticity
 # scale location plot
+# we can't assume homoskedasticity because 
+#band of the residuals v fitted: fairly consistent but is more varied on the extremes then model1
+#There is a small amount of edivdence for a violation, we will be cautious and use hetreoskedastic robust SE
 
 # 6. IID normal error, hist of residuals, qqplot of residuals
 #plot(model)
+hist(model2$residuals, breaks = 100)
+#normal, supporting IID
+#qq plot, fairly normal except in extremes - more normal than model1
 ```
 . One model that includes the previous covariates, and most, if not all, other covariates. A key purpose of this model is to demonstrate the robustness of your results to model specification.
 ```{r}
+#JS
 #3. log(crmrte) ~ log(density) + pctymle + pctmin80 + taxpc + (maybe something location wise? the wages maybe? <- need to do EDA for wages)
-(model3 <- lm(log(crmrte) ~ log(density) + pctymle + pctmin80 + med_wag + log(taxpc) + polpc + log(prbarr), data=crime))
+(model3 <- lm(log(crmrte) ~ log(density) + log(pctymle) + pctmin80 + med_wag + log(prbarr), data=crime))
 plot(model3)
 #check the assumptions the graphs do
 
@@ -265,42 +303,74 @@ plot(model3)
 (se.model3 = sqrt(diag(vcovHC(model3))))
 
 # 4'. Exo/Endogeneity
+plot(model3, which=1)
+plot(model3, which=5)
+(cov(log(crime$density), model3$residuals))
+(cov(log(crime$pctymle), model3$residuals))
+(cov(crime$pctmin80, model3$residuals))
+(cov(crime$med_wag, model3$residuals))
+(cov(log(crime$prbarr), model3$residuals))
+#all have is a very, very small correlation, indicating we can assume exogeneity.
 
 # 4. Zero-conditional mean
-plot(model)
-
 #fitted v redisuals
+#There is no evidence of a violation of this assumption, the red spline line very close to 0 - same as model 1
+#left side has one point that pulls the mean down, otherwise zero mean
+
 
 #5. homoskedasticity
 # scale location plot
+# we can't assume homoskedasticity because 
+#band of the scale location: definitely heteroskedastic 
+#use hetreoskedastic robust SE
 
 # 6. IID normal error, hist of residuals, qqplot of residuals
 #plot(model)
+hist(model3$residuals, breaks = 100)
+#normal, supporting IID - has two fairly extreme points but mostly is together & normal
+#qq plot, better fit than model 1 on the whole but has two very far outliers
 ```
-## 5. Test 6 CLM
-
-For additional models, you
-should check all assumptions, but only highlight major differences from your first model in your report.
-1. Linear Model
-2. Random Sample
-3. No perfect colinearity
-4. Zero Conditional mean
-4'. Exogeneity (I don't think we need to worry about this one?)
-5. Homoskedasticity
-6. IID normal error
-
 ## 6. Well formatted regression table (Stargazer?)
 
 Make sure that standard errors presented in this table are valid. Also, be sure to comment on both statistical and practical significance.
 
 ```{r}
+#JS
 stargazer(model1, model2, model3, type = "text", omit.stat = "f",
           se = list(se.model1, se.model2, se.model3),
           star.cutoffs = c(0.05, 0.01, 0.001))
+#model1
+#significant on log(density) at the .001 level. cool. practical & statistical
+
+#model2
+#two .01 level significance 
+# holding all other things constant
+#log(density) remains significant supporting it's use in the model - for each % change in density, there is a .51% change in crmrte
+#practically and statistically significant
+#log(pctmale) is also signicicant at the .001 level - for each % change in pctymle, there is a .388% change in crmrte
+#pctmin80 significant - for each unit change in pctmin80, there is a 1.2% change in crmrte
+#seems to be the best
+#practically significant - almost a one to one increase
+
+#model3
+#very similar interpretation to moel 2 + two insiginificant additional vairables
+#log(density) remains significant supporting it's use in the model - for each % change in density, there is a .48% change in crmrte
+#practically and statistically significant
+#log(pctmale) is also signicicant at the .05 level - for each % change in pctymle, there is a .277% change in crmrte
+#pctmin80 significant - for each unit change in pctmin80, there is a 1.2% change in crmrte
+#med wage - not siginificant - the beta is negative - for each unit change (thousands of dollars) in med_wag, there is a -.1% change in crmrte
+#would be practically significant, but not statistically significant
+#log(prbarr) - not significant - the beta is negative - or each % change in density, there is a -.249% change in crmrte
+#would be practically signgifcant
+#because the additional variables are not significant, we have support for using model 2
+
 ```
 
 ## 7. Discussion of Causality
 
 In particular, include a discussion of what variables are not included in your analysis and the likely direction of omitted variable bias. Highlight any coefficients you find that appear to have the wrong sign from a causal perspective, and explain why this is the case.
 
+I don't think we can talk in terms of causality. the data isn't collected in an experiment format, it's observational. 
+
 ## 8. Brief Conclusion with high-level takeaways
+
