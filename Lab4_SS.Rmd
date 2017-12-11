@@ -18,8 +18,8 @@ library(sandwich)
 library(stargazer)
 
 #set working directory
-setwd("C:/Users/Sullivan/Dropbox/W203/Lab 4")
-
+#setwd("C:/Users/Sullivan/Dropbox/W203/Lab 4")
+setwd("~/Desktop/data_w203/w203.6Lab4")
 #load the data
 crime <- read.csv("crime.csv")
 
@@ -174,11 +174,17 @@ Then we examined the percentage of young males variable (`pctymle`). The values 
 
 ```{r}
 summary(crime$prbarr)
-hist(log(crime$prbarr), breaks=50,
+hist(crime$prbarr, breaks=50,
      main="Histogram of Probability of Arrest")
 ```
 
-Lastly, we examined the probability of arrest (`prbarr`). It has a nice, normal distribution, and we saw no need to transform this variable.
+Lastly, we examined the probability of arrest (`prbarr`). While it is not as skewed as the rest, it is still left leaning, so we decided to apply the log transform to this variable.
+
+```{r}
+crime$log_prbarr <- log(crime$prbarr)
+hist(crime$log_prbarr, breaks=50,
+     main="Histogram of Log of Probability of Arrest")
+```
 
 ```{r}
 scatterplotMatrix(crime[,c('crmrte', 'density', 'med_wag', 'taxpc', 'pctmin80', 'pctymle', 'prbarr')])
@@ -195,6 +201,8 @@ Addressing MLR1, the linearity assumption, the models we create below are linear
 Our sample appears to be nearly the entire population, and we ran into no NA values above. North Carolina has 100 counties, and our dataset contains 90. It contains enough of the population for us to assume MLR2, the assumption of random sampling.
 
 We addressed MLR3 above.
+
+##First Model : 
 
 We defined our first model hoping to keep to chose one or two key variables. We settled on log(`crmrte`) ~ log(`density`), as the more densely populated an area, the opportunity for crime to occur increases both from increased individuals and increased property in an area. Above we also see that `density` has a strong, positive correlation with `crmrte`.
 
@@ -247,115 +255,180 @@ hist(model1$residuals, breaks = 100)
 
 When assessing MLR6, we examine the Q-Q plot of the model. Here, we can see that the data closely hugs the diagonal, indicating normal residuals. The histogram of the residuals also supports this conclusion. Both charts a few values on the extremes that vary, but on the whole support MLR6.
 
+
+Running a summary on model1 : 
+
 ```{r}
-#SS
+summary(model1)
+```
+
+We noticed that the R-squared value was `summary(model1)$r.squared`
+
+##Second Model  
+
+Next, we wanted to refine our model with more independent variables, we chose to add the pctymle variable and the pctmin80 variable to our model. Since the pctymle distribution was skewed from the analysis of the histogram, we decided to use the log form of the variable in the analysis. 
+
+```{r}
 #2. log(crmrte) ~ log(density) + mpercent young males + pencent minority in 1980
-(model2 <- lm(log(crmrte) ~ log(density) + log(pctymle) + pctmin80, data=crime))
-plot(model2)
-#check the assumptions the graphs do
+(model2 <- lm(log(crmrte) ~ log_density + log_pctymle + pctmin80, data=crime))
+```
 
-#Using errors robust to heteroskedasticity - for stargazer
-(se.model2 = sqrt(diag(vcovHC(model2))))
-
-# 4'. Exo/Endogeneity
-plot(model2, which=1)
-plot(model2, which=5)
-(cov(log(crime$density), model2$residuals))
-(cov(log(crime$pctymle), model2$residuals))
-(cov(crime$pctmin80, model2$residuals))
-#There is a very, very small correlation, indicating we can assume exogeneity.
-
-# 4. Zero-conditional mean
-#fitted v redisuals
-#There is no evidence of a violation of this assumption, the red spline line very close to 0 - same as model 1
+From examining the coefficients we see that, with everything else being held a constant an increase of 1% in density, we see an increase of 0.5% in the crime rate. Similary, an increase in 'young male population'
+with everything else being constant, causes an increase of crime rate by 0.38% and finally any increase of minority population by 1 unit, results in a nearly 1% increase in the crimerate. 
 
 
-#5. homoskedasticity
-# scale location plot
-# we can't assume homoskedasticity because 
-#band of the residuals v fitted: fairly consistent but is more varied on the extremes then model1
-#There is a small amount of edivdence for a violation, we will be cautious and use hetreoskedastic robust SE
 
+Now let us check the assumptions of the CLM . 
+
+1> Linearity :  Given we aren't constraing the error, we can assume a linear relationship between the dependent and the independent variables. 
+
+2>  Random Sampling : As above 
+
+3>  No perfect Collinearity : It is clear from the correlation value of the indpendent variables taken pairwise : `cor(log(crime$pctymle), crime$density)`, `cor(log(crime$pctymle), crime$pctmin80)` and `cor(crime$pctmin80, crime$density)` that none of the indpendent variables are collinear. 
+
+4> Zero conditional Mean:  Let us examine the zero conditional mean assumption by looking at the plot of residuals vs fitted values 
+
+```{r}
+plot(model2, which = 1)
+```
+
+It is clear from the graph that the assumption holds and the red spline line is close to zero for all the fitted values. 
+
+Exogenity : 
+
+```{r}
+cov(crime$log_density, model2$residuals)
+cov(crime$log_pctymle, model2$residuals)
+cov(crime$pctmin80, model2$residuals)
+```
+
+From the correlation values of the residuals to the independent variables, it is clear that exogenity assumption holds. 
+
+(The way the variables have been defined, also rules out any endogenous relationship.)
+
+To assess homoskedacity, let us look at the graph of standardized residuals vs the fitted values below
+
+```{r}
+plot(model2, which = 3)
+# Breusch-Pagan-Test
+bptest(model2)
+# Score-test for non-constant error variance
+ncvTest(model2)
+se.model2 = sqrt(diag(vcovHC(model2)))
+```
+
+The graph clearly shows there are some outliers to the left edge and the band seems to narrow as we move to the right. 
+
+Further supporting this violation, the Breusch-Pagan test has significant p-value. We will be conservative and use the robust standard errors we have produced above to address any heteroskedacity in the data.
+
+To test the normality of the errors, let us examine a qqplot of the residuals and the histogram of the residuals.
+
+```{r}
 # 6. IID normal error, hist of residuals, qqplot of residuals
-#plot(model)
+plot(model2, which=2)
+```
+
+```{r}
 hist(model2$residuals, breaks = 100)
 #normal, supporting IID
-#qq plot, fairly normal except in extremes - more normal than model1
+#qq plot, fairly normal except in extremes
 ```
-. One model that includes the previous covariates, and most, if not all, other covariates. A key purpose of this model is to demonstrate the robustness of your results to model specification.
+
+From the above graphs, it is clearly that the errors are mostly normal, except in the extremes where we see a few outliers. 
+
+But it is pretty clear that the assumption is true. 
+
+
+Finally examining the summary of model2 we see 
+
+```{r}
+summary(model2)
+```
+
+That the rsquare value has improved to `summary(model2)$r.squared` in Model2. 
+
+##Model3 : 
+  Now, let us examine a model, that includes the previous covariates and along with the probability of arrests and the median wage. Also from the initial analysis of probability of arrests, we concluded that the sample distribution is skewed and it would better to transform it by taking the logarithm of the variable. 
+  
+  
 ```{r}
 #JS
 #3. log(crmrte) ~ log(density) + pctymle + pctmin80 + taxpc + (maybe something location wise? the wages maybe? <- need to do EDA for wages)
-(model3 <- lm(log(crmrte) ~ log(density) + log(pctymle) + pctmin80 + med_wag + log(prbarr), data=crime))
-plot(model3)
-#check the assumptions the graphs do
-
-#Using errors robust to heteroskedasticity - for stargazer
-(se.model3 = sqrt(diag(vcovHC(model3))))
-
-# 4'. Exo/Endogeneity
-plot(model3, which=1)
-plot(model3, which=5)
-(cov(log(crime$density), model3$residuals))
-(cov(log(crime$pctymle), model3$residuals))
-(cov(crime$pctmin80, model3$residuals))
-(cov(crime$med_wag, model3$residuals))
-(cov(log(crime$prbarr), model3$residuals))
-#all have is a very, very small correlation, indicating we can assume exogeneity.
-
-# 4. Zero-conditional mean
-#fitted v redisuals
-#There is no evidence of a violation of this assumption, the red spline line very close to 0 - same as model 1
-#left side has one point that pulls the mean down, otherwise zero mean
-
-
-#5. homoskedasticity
-# scale location plot
-# we can't assume homoskedasticity because 
-#band of the scale location: definitely heteroskedastic 
-#use hetreoskedastic robust SE
-
-# 6. IID normal error, hist of residuals, qqplot of residuals
-#plot(model)
-hist(model3$residuals, breaks = 100)
-#normal, supporting IID - has two fairly extreme points but mostly is together & normal
-#qq plot, better fit than model 1 on the whole but has two very far outliers
+(model3 <- lm(log(crmrte) ~ log_density + log_pctymle + pctmin80 + med_wag + log_prbarr, data=crime))
 ```
-## 6. Well formatted regression table (Stargazer?)
+From the model3, we can say that as the population density increases by 1%, the crime rate goes up by 0.4799% with everything else being constant. Similarly, a percentage increase in the fraction of young males in the population by 1% increases the crime rate by 0.27% and an increase in minorities by 1% (compared to their population in 1980), causes an increase in crime-rate by 1.18%. Finally, the two new variables med_wage and probability of arrests, both have a negative effect on the crime rate. And as median wage increases by a unit of 1, the crime-rate decreases by 0.5% and as the probability of arrest goes up by 1%, the crime rate goes down by 0.24%. 
 
-Make sure that standard errors presented in this table are valid. Also, be sure to comment on both statistical and practical significance.
+
+Zero conditional Mean:As before, we take the plot of residuals vs fitted values to examine the zero conditional mean
+
+```{r}
+plot(model3, which = 1)
+```
+There is no evidence of a violation of this assumption, while the red spline line very close to zero, we do observe that to the left the red spline line seems to move below zero. This can be attributed to very few points on the left side of the fitted values.
+
+
+Exogenity : 
+
+```{r}
+cov(crime$log_density, model3$residuals)
+cov(crime$log_pctymle, model3$residuals)
+cov(crime$pctmin80, model3$residuals)
+(cov(crime$med_wag, model3$residuals))
+(cov(crime$log_prbarr, model3$residuals))
+```
+
+Since the correlation values of the residuals to the independent variables are really low, it is clear that exogenity assumption holds. 
+
+
+
+To assess homoskedacity, let us look at the graph of standardized residuals vs the fitted values below
+
+```{r}
+plot(model3, which = 3)
+# Breusch-Pagan-Test
+bptest(model3)
+# Score-test for non-constant error variance
+ncvTest(model3)
+se.model3 = sqrt(diag(vcovHC(model2)))
+```
+
+The graph clearly shows there are some outliers and there is no band in which the values are found. This shows that the variables are heteroskedactic. 
+
+Further supporting this violation, the Breusch-Pagan test has significant p-value. We will be conservative and use the robust standard errors we have produced above to address any heteroskedacity in the data.
+
+To test the normality of the errors, let us examine a qqplot of the residuals and the histogram of the residuals.
+
+```{r}
+# 6. IID normal error, hist of residuals, qqplot of residuals
+plot(model3, which=2)
+```
+```{r}
+hist(model2$residuals, breaks = 100)
+#normal, supporting IID
+
+```
+
+From both these graphs, it is clear that the residuals is normal. 
+
+## 6. Well formatted regression table 
+
+We used the Stargazer library function to compare the three models. Though we see very little evidence of complete heteroskedacity, we would like to be conservative and we are using the robust standard errors for all the three models.
 
 ```{r}
 #JS
 stargazer(model1, model2, model3, type = "text", omit.stat = "f",
           se = list(se.model1, se.model2, se.model3),
           star.cutoffs = c(0.05, 0.01, 0.001))
-#model1
-#significant on log(density) at the .001 level. cool. practical & statistical
-
-#model2
-#two .01 level significance 
-# holding all other things constant
-#log(density) remains significant supporting it's use in the model - for each % change in density, there is a .51% change in crmrte
-#practically and statistically significant
-#log(pctmale) is also signicicant at the .001 level - for each % change in pctymle, there is a .388% change in crmrte
-#pctmin80 significant - for each unit change in pctmin80, there is a 1.2% change in crmrte
-#seems to be the best
-#practically significant - almost a one to one increase
-
-#model3
-#very similar interpretation to moel 2 + two insiginificant additional vairables
-#log(density) remains significant supporting it's use in the model - for each % change in density, there is a .48% change in crmrte
-#practically and statistically significant
-#log(pctmale) is also signicicant at the .05 level - for each % change in pctymle, there is a .277% change in crmrte
-#pctmin80 significant - for each unit change in pctmin80, there is a 1.2% change in crmrte
-#med wage - not siginificant - the beta is negative - for each unit change (thousands of dollars) in med_wag, there is a -.1% change in crmrte
-#would be practically significant, but not statistically significant
-#log(prbarr) - not significant - the beta is negative - or each % change in density, there is a -.249% change in crmrte
-#would be practically signgifcant
-#because the additional variables are not significant, we have support for using model 2
-
 ```
+
+From the stargazer above : 
+
+For model1, we see that the log_density is statistically significant at p < .001 level. Also since we are examining the elasitic relationship between the crimerate and the density of population, we see that for 1% increase in the density of population results in an increase in crimerate bye 0.486% . Since this is a pretty observable effect, the log_density is practically significant too. 
+
+For model2, we see that log_density, log_pctymle, pctmin80 are all statistically significant at the p < 0.001 level. This clearly indicates statistical significance. Also, given everything else is constant, the crime rate increases by 0.5% with every 1% increase in the density of population, increases by 0.38% for every 1% increase in the fraction of the young male population and finally the crimerate will increase by 1.2% when the minority population increases by 1% over the 1980 value. The value of change signifies a practical significance too. 
+
+For model3, we see that the log_density,  pctmin80 are statistically significant at the p < 0.001 level, log_pctymle is statistically significant at the 0.01 level, but med_wag and log_prbarr are not statistically signficant. Practically, holding everything else constant, just increasing the density of the population by 1% increases the crime rate by 0.48%, only increasing the young male population by 1% causes an increase in crime rate by 0.27%, increasing the minority population by 1% increase crime rate by 1.2%. The median wage and the log_prbarr (log of probability of arrest) have a negative effect on the crime rate. That is as the median wage increases by 1 unit, the crime decreases by 1% and while the probability of arrest increases by 1% , the crime rate decreases by 0.25% .
+
 
 ## 7. Discussion of Causality
 
