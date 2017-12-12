@@ -18,8 +18,8 @@ library(sandwich)
 library(stargazer)
 
 #set working directory
-#setwd("C:/Users/Sullivan/Dropbox/W203/Lab 4")
-setwd("~/Desktop/data_w203/w203.6Lab4")
+setwd("C:/Users/Sullivan/Dropbox/W203/Lab 4")
+#setwd("~/Desktop/data_w203/w203.6Lab4")
 
 #load the data
 crime <- read.csv("crime.csv")
@@ -80,7 +80,7 @@ label <- c("county identifier",
 desc <- data.frame(variable, label)
 ```
 
-## 1. Introduction and Exploratory Analysis
+## Introduction
 
 To address questions regarding the determinants of crime in North Carolina in 1987, we conducted an analysis of the state's crime rate and possible related varaibles, including many of the following:
 
@@ -99,7 +99,7 @@ Note that we did not analyze police per capita (`polpc`), probablility of convic
 First, we created our new `med_wag` variable, and performed a high level analysis to assess the quality of our data.
 
 ```{r, include=FALSE}
-#Take the median foe each county from all wage variables.
+#Take the median for each county from all wage variables.
 crime$med_wag <- apply(crime[,(16:24)], 1, median, na.rm=TRUE)
 
 #check for NAs among key variables
@@ -109,7 +109,7 @@ C = C[filter,]
 summary(C)
 nrow(C)
 
-#review the more aggreate location data
+#review the aggregate location data
 table(crime$west)
 table(crime$central)
 table(crime$urban)
@@ -241,7 +241,7 @@ We defined our first model hoping to use only one or two key variables. We settl
 (model1 <- lm(log_crmrte ~ log_density, data=crime))
 ```
 
-First, we create the model (`model1`) and examine its coefficients. For each 1% increase in `density`, there is a .49% increase in `crmrte`. Here we also set up the standard errors that are robust to hetreoskedasticity.
+First, we create the model (`model1`) and examine its coefficients. For each 1% increase in `density`, there is a .49% increase in `crmrte`.
 
 ```{r}
 #examine the covariance between the predictor and the residuals
@@ -300,7 +300,7 @@ We noticed that the R-squared value was `summary(model1)$r.squared`
 
 ### Model 2 
 
-Next, we wanted to refine our model with more independent variables, and we chose to add `pctymle` and `pctmin80` incorporate some demographic information in our model. Since the `pctymle` distribution was skewed from the analysis of the histogram, we decided to use the log form of the variable in the analysis. The percent of young males (`pctymle`) and the percent minority in 1980 (`pctmin80`) are both reasonable variables to include in this model, considering males tend to be arrested and incarcerated more often than females and (unfornately) underrepresented groups tend to be associated with higher crime, so the relationship is worth exploring. Though the `pctmin80` data is 7 years old, we chose to include it in our model so we could somewhat assess racial diversity.
+Next, we wanted to expand our model with more independent variables, and we chose to add `pctymle` and `pctmin80` incorporate some demographic information in our model. Since the `pctymle` distribution was skewed from the analysis of the histogram, we decided to use the log form of the variable in the analysis. The percent of young males (`pctymle`) and the percent minority in 1980 (`pctmin80`) are both reasonable variables to include in this model as they tell us about the demographic diversity of a county. Though the `pctmin80` data is 7 years old, we chose to include it in our model so we could somewhat assess racial diversity.
 
 ```{r}
 #create the model
@@ -311,7 +311,7 @@ From examining the coefficients we see that, with everything else being held a c
 
 Now let us check the assumptions of the CLM. 
 
-4> Zero conditional Mean:  Let us examine the zero conditional mean assumption by looking at the plot of residuals vs fitted values 
+Let us examine the zero conditional mean assumption by looking at the plot of residuals vs fitted values.
 
 ```{r}
 #residuals v fitted values plot
@@ -319,8 +319,6 @@ plot(model2, which=1)
 ```
 
 It is clear from the graph that the assumption holds and the red spline line is close to zero for all the fitted values. 
-
-Exogenity : 
 
 ```{r}
 #examine covariance of predictor variables and model residuals
