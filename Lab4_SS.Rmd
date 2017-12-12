@@ -290,13 +290,15 @@ hist(model1$residuals, breaks=50,
 
 When assessing MLR6, we examine the Q-Q plot of the model. Here, we can see that the data closely hugs the diagonal, indicating normal residuals. The histogram of the residuals also supports this conclusion. Both charts a few values on the extremes that vary, but on the whole support MLR6.
 
-Running a summary on model1 : 
+Running a summary on model1 using the Robust standard errors to account for the heteroskedacity we get:
 
 ```{r}
-summary(model1) #I don't think we can do this - it assumes homoskedasity
+s1 <- summary(model1) 
+s1$coefficients[, 2] <- sqrt(diag(vcovHC(model1)))
+s1
 ```
 
-We noticed that the R-squared value was `summary(model1)$r.squared`
+We noticed that the R-squared value was `s1$r.squared`
 
 ### Model 2 
 
@@ -311,7 +313,7 @@ From examining the coefficients we see that, with everything else being held a c
 
 Now let us check the assumptions of the CLM. 
 
-4> Zero conditional Mean:  Let us examine the zero conditional mean assumption by looking at the plot of residuals vs fitted values 
+Zero conditional Mean:  Let us examine the zero conditional mean assumption by looking at the plot of residuals vs fitted values 
 
 ```{r}
 #residuals v fitted values plot
@@ -329,9 +331,7 @@ cov(crime$log_pctymle, model2$residuals)
 cov(crime$pctmin80, model2$residuals)
 ```
 
-From the correlation values of the residuals to the independent variables, it is clear that exogenity assumption holds. 
-
-(The way the variables have been defined, also rules out any endogenous relationship.)
+From the correlation values of the residuals to the independent variables, it is clear that exogenity assumption holds. (The way the variables have been defined, also rules out any endogenous relationship.)
 
 To assess homoskedacity, let us look at the graph of standardized residuals vs the fitted values below
 
@@ -348,12 +348,9 @@ ncvTest(model2)
 se.model2 = sqrt(diag(vcovHC(model2)))
 ```
 
-The graph clearly shows there are some outliers to the left edge and the band seems to narrow as we move to the right. 
-
+The graph clearly shows there are some outliers to the left edge and the band seems to narrow as we move to the right.
 Further supporting this violation, the Breusch-Pagan test has a significant p-value. We will be conservative and use the robust standard errors we have produced above to address any heteroskedacity in the data.
-
 To test the normality of the errors, let us examine a qqplot of the residuals and the histogram of the residuals.
-
 ```{r}
 #qq plot
 plot(model2, which=2)
@@ -363,21 +360,21 @@ hist(model2$residuals, breaks=50,
      main="Histogram of Model2 Residuals")
 ```
 
-From the above graphs, it is clearly that the errors are mostly normal, except in the extremes where we see a few outliers. 
+From the above graphs, it is clearly that the errors are mostly normal, except in the extremes where we see a few outliers. But it is pretty clear that the assumption is true. 
 
-But it is pretty clear that the assumption is true. 
-
-Finally examining the summary of model2 we see 
+Finally examining the summary of model2 and using the standard errors : 
 
 ```{r}
-summary(model2)
+s2 <- summary(model2)
+s2$coefficients[, 2] <- sqrt(diag(vcovHC(model2)))
+s2
 ```
 
-That the rsquare value has improved to `summary(model2)$r.squared` in Model2. 
+That the rsquare value has improved to `s2$r.squared` and the adjusted R-square is `s2$adj.r.squared` in Model2. 
 
 ### Model 3
 
-Now, let us examine a model, that includes the previous covariates and along with the probability of arrests (`prbarr`) and the median wage (`med_wag`) to assess the robustness of our original models. Also from the initial analysis of `prbarr`, we concluded that the sample distribution is skewed and it would better to transform it by taking the logarithm of the variable. 
+Now, let us examine a model, that includes the previous covariates and along with the probability of arrests (`prbarr`) and the median wage (`med_wag`) to assess the robustness of our original models. Also from the initial analysis of `prbarr`, we concluded that the sample distribution is skewed and it would better to use the log transformed variable. 
   
 ```{r}
 #create the model
@@ -408,6 +405,7 @@ cov(crime$log_prbarr, model3$residuals)
 
 Since the correlation values of the residuals to the independent variables are really low, it is clear that exogenity assumption holds. 
 
+Homoskedasticity:
 To assess homoskedasticity, let us look at the graph of standardized residuals vs the fitted values below
 
 ```{r}
@@ -422,10 +420,9 @@ ncvTest(model3)
 se.model3 = sqrt(diag(vcovHC(model3)))
 ```
 
-The graph clearly shows there are some outliers and there is no band in which the values are found. This shows that the variables are heteroskedactic. 
+The graph clearly shows there are some outliers and there is no band in which the values are found. This shows that the variables are heteroskedactic. Further supporting this violation, the Breusch-Pagan test has significant p-value. We will be conservative and use the robust standard errors we have produced above to address any heteroskedacity in the data.
 
-Further supporting this violation, the Breusch-Pagan test has significant p-value. We will be conservative and use the robust standard errors we have produced above to address any heteroskedacity in the data.
-
+Normality of errors:
 To test the normality of the errors, let us examine a qqplot of the residuals and the histogram of the residuals.
 
 ```{r}
@@ -438,6 +435,15 @@ hist(model3$residuals, breaks=50,
 ```
 
 From both these graphs, it is clear that the residuals are normal. 
+
+Finally taking a summary of model3 using the robust standard errors :
+```{r}
+s3 <- summary(model3) 
+s3$coefficients[, 2] <- sqrt(diag(vcovHC(model3)))
+s3
+```
+
+Though the rsquare value has improved to `s3$r.squared` and the adjusted R-square is `s3$adj.r.squared` in Model3, it hasn't improved all that much in comparison to Model2 and does not justify the addition of the extra variables.
 
 ## Comparison of Models
 
@@ -457,6 +463,9 @@ For `model1`, we see that the log_density is statistically significant at $p<.00
 For `model2`, we see that `log_density`, `log_pctymle`, and `pctmin80` are all statistically significant at the p < 0.001 level. This clearly indicates statistical significance. Also, given everything else is constant, the crime rate increases by 0.5% with every 1% increase in the density of population, increases by 0.38% for every 1% increase in the fraction of the young male population and finally the crimerate will increase by 1.2% when the minority population increases by 1% over the 1980 value. The value of change signifies a practical significance too. 
 
 For `model3`, we see that the `log_density`,  `pctmin80` are statistically significant at the p < 0.001 level, `log_pctymle` is statistically significant at the 0.01 level, but med_wag and log_prbarr are not statistically signficant. Practically, holding everything else constant, just increasing the density of the population by 1% increases the crime rate by 0.48%, only increasing the young male population by 1% causes an increase in crime rate by 0.27%, increasing the minority population by 1% increase crime rate by 1.2%. The median wage and the log_prbarr (log of probability of arrest) have a negative effect on the crime rate. That is as the median wage increases by 1 unit, the crime decreases by 1% and while the probability of arrest increases by 1%, the crime rate decreases by 0.25%.
+
+From the adjusted r-squared values we can clearly see an improvement from model1 to model2. 
+While there is a modest increase in model3 when compared to model2, it does not justify the addition of two variables that are statistically insignificant. 
 
 ## Conclusions and Implications
 
