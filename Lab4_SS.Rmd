@@ -96,7 +96,7 @@ To address the question regarding the causes of crime, we examined variables cri
 
 First, we created our new `med_wag` variable, and performed a high level analysis to assess the quality of our data.
 
-```{r, include=FALSE}
+```{r}
 #Take the median for each county from all wage variables.
 crime$med_wag <- apply(crime[,(16:24)], 1, median, na.rm=TRUE)
 
@@ -275,7 +275,7 @@ To assess MLR5, the homoskedasticity assumption, we look at the Residuals v Fitt
 plot(model1, which=5)
 ```
 
-Throughout out analysis above, we noticed there was at least one quite large outlier. Here we will look at the Residuals v Leverage plot to determine if we need to remove this outlier. The outlier does not appear to have any sizable bearing on `model1`, so we may leave it in our analysis.
+Throughout out analysis above, we noticed there was at least one quite large outlier. Here we looked at the Residuals v Leverage plot to determine if we need to remove this data point. The outlier fall inside of the Cook's distnace and does not appear to have any sizable bearing on `model1`, so we may leave it in our analysis.
 
 ```{r}
 #qqplot
@@ -288,10 +288,10 @@ hist(model1$residuals, breaks=50,
 
 When assessing MLR6, we examine the Q-Q plot of the model. Here, we can see that the data closely hugs the diagonal, indicating normal residuals. The histogram of the residuals also supports this conclusion. Both charts a few values on the extremes that vary, but on the whole support MLR6.
 
-Running a summary on model1 using the Robust standard errors to account for the heteroskedacity we get:
+Next, we ran a summary on `model1` and used our standard errors that are robust to heteroskedasticity.
 
 ```{r}
-s1 <- summary(model1) 
+(s1 <- summary(model1))
 s1$coefficients[, 2] <- sqrt(diag(vcovHC(model1)))
 s1
 ```
@@ -309,21 +309,17 @@ Next, we wanted to expand our model with more independent variables, and we chos
 
 From examining the coefficients we see that, with everything else being held a constant an increase of 1% in `density`, we see an increase of 0.5% in the crime rate. Similary, an increase in `pctymle` with everything else being constant, produces an increase of crime rate by 0.38% and finally any increase of minority population by 1 unit, results in a nearly 1% increase in the crime rate. 
 
-<<<<<<< HEAD
-Now let us check the remaining assumptions. First, we will examine the zero conditional mean assumption by looking at the plot of residuals vs fitted values.
-=======
-Now let us check the assumptions of the CLM. 
-
-
-Let us examine the zero conditional mean assumption by looking at the plot of residuals vs fitted values.
->>>>>>> f79207e58203e9253767144cfa3cff89e03bbdbd
+Now let us check the remaining assumptions. First, we will double check MLR3 with the variable's Variance Inflation Factors. Then we will examine the zero conditional mean assumption by looking at the plot of residuals vs fitted values.
 
 ```{r}
+#Variance Inflation Factors
+vif(model2)
+
 #residuals v fitted values plot
 plot(model2, which=1)
 ```
 
-The red spline line is close to zero for all the fitted values, with only a small downturn on the left side. This supports making the MLR4 assumption.
+The VIF values are low, less than 10, supporting the MLR3 assumption. The red spline line is close to zero for all the fitted values, with only a small downturn on the left side. Compared to `model1`, the red spline line appears to fit zero better. This supports making the MLR4 assumption.
 
 ```{r}
 #examine covariance of predictor variables and model residuals
@@ -332,7 +328,7 @@ cov(crime$log_pctymle, model2$residuals)
 cov(crime$pctmin80, model2$residuals)
 ```
 
-From the correlation values of the residuals to the independent variables, it is clear that exogenity assumption holds. (The way the variables have been defined, also rules out any endogenous relationship.)
+The covariance between each of the independent variables and the model residuals are each very small, and it is clear that exogenity assumption holds.
 
 To assess homoskedasticity, we looked at the graph of standardized residuals vs the fitted values below.
 
@@ -369,7 +365,7 @@ The Q-Q plot has some variation around the ends, and both the histogram and the 
 Finally we can examine the summary command, using our heteroskedasticity robust standard errors from above.
 
 ```{r}
-s2 <- summary(model2)
+(s2 <- summary(model2))
 s2$coefficients[, 2] <- sqrt(diag(vcovHC(model2)))
 s2
 ```
@@ -387,16 +383,17 @@ We created one more model to include the previous covariates and along with the 
 
 From the `model3`, we can say that as the population density increases by 1%, the crime rate goes up by 0.4799% with everything else being constant. Similarly, a percentage increase in the fraction of young males in the population by 1% increases the crime rate by 0.27% and an increase in minorities by 1% (compared to their population in 1980), causes an increase in crime-rate by 1.18%. Finally, the two new variables med_wage and probability of arrests, both have a negative effect on the crime rate. And as median wage increases by a unit of 1, the crime-rate decreases by 0.5% and as the probability of arrest goes up by 1%, the crime rate goes down by 0.24%.  
 
-Zero conditional Mean: As before, we take the plot of residuals vs fitted values to examine the zero conditional mean
+As before, we confirm MLR3 with VIF and examine the plot of residuals vs fitted values to determine the the zero conditional mean assumption.
 
 ```{r}
+#Variance Inflation Factors
+vif(model3)
+
 #residuals vs fitted values plot
 plot(model3, which=1)
 ```
 
-There is no evidence of a violation of this assumption, while the red spline line very close to zero, we do observe that to the left the red spline line seems to move below zero. This can be attributed to very few points on the left side of the fitted values.
-
-Exogenity : 
+Again, all VIF values are less than 10, supporting the MLR3 assumption. There is no evidence of a violation of MLR4. While the red spline line very close to zero, we also observe that to the left the line seems to move further below zero than in `model2`. This can likely be attributed to fewer data points on the left side of the fitted values.
 
 ```{r}
 #examine covariance of predictor variables and model residuals
@@ -407,10 +404,9 @@ cov(crime$med_wag, model3$residuals)
 cov(crime$log_prbarr, model3$residuals)
 ```
 
-Since the correlation values of the residuals to the independent variables are really low, it is clear that exogenity assumption holds. 
+Again, the covariance between each of the independent variables and the model residuals are very small, and we again see exogeneity holds.
 
-Homoskedasticity:
-To assess homoskedasticity, let us look at the graph of standardized residuals vs the fitted values below
+Next we look at `model3`'s scale-location plot, Breusch-Pagan test, and the Score-test to assess homoskedasticity.
 
 ```{r}
 #scale-location plot
@@ -426,8 +422,7 @@ se.model3 = sqrt(diag(vcovHC(model3)))
 
 The graph clearly shows there are some outliers and there is no band in which the values are found. This shows that the variables are heteroskedactic. Further supporting this violation, the Breusch-Pagan test has significant p-value. We will be conservative and use the robust standard errors we have produced above to address any heteroskedacity in the data.
 
-Normality of errors:
-To test the normality of the errors, let us examine a qqplot of the residuals and the histogram of the residuals.
+Again, we examine a Q-Q plot of the residuals and the histogram of the residuals to determine the MLR6 assumption.
 
 ```{r}
 #qq plot
@@ -438,16 +433,17 @@ hist(model3$residuals, breaks=50,
      main="Histogram of Model3 Residuals")
 ```
 
-From both these graphs, it is clear that the residuals are normal. 
+Both plots show a fairly normal distribution, with a smaller outlier to the left and a larger outlier to the right. `model3`'s residuals histrogram looks marginally more normal than `model2`'s, and MLR6 still holds.
 
-Finally taking a summary of model3 using the robust standard errors :
+Finally we examine the summary of `model3` with residuals robust to heteroskedasticity.
+
 ```{r}
 s3 <- summary(model3) 
 s3$coefficients[, 2] <- sqrt(diag(vcovHC(model3)))
 s3
 ```
 
-Though the rsquare value has improved to `s3$r.squared` and the adjusted R-square is `s3$adj.r.squared` in Model3, it hasn't improved all that much in comparison to Model2 and does not justify the addition of the extra variables.
+Though the rsquare value has improved to `s3$r.squared` and the adjusted R-square is `s3$adj.r.squared` in `model3`, it hasn't improved all that much in comparison to Model2 and does not justify the addition of the extra variables.
 
 ## Comparison of Models
 
