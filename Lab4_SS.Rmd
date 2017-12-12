@@ -473,8 +473,6 @@ While there is a modest increase in model3 when compared to model2, it does not 
 
 ## Conclusions and Implications
 
-From our analysis, we can conclude that the variables `log_density`, `log_pctmle` and `pctmin80` 
+From our analysis, we can conclude that the variables `log_density`, `log_pctmle` and `pctmin80` had the biggest impact on `crmrte`. Although our results are informative, no causal relationship can be drawn from our models. In general, regression itself does not imply causality; it's basis is in correlation. In this particular instance, this general rule holds. The data we have is observational, and no experiment was performed.
 
 Note that we did not analyze police per capita (`polpc`), probablility of conviction (`prbcon`), probability of prison sentence (`prbpris`), average sentance (`avgsen`), or the offense mix (`mix`). There are several reasons we exlcuded `polpc` from our analysis. First, the number of police officers may be highly dependent on how much crime occurs in an area, and second, a county's resources, or wealth, could impact the number of police. Since we already have measures for wealth, and due to this possible confounding relationship between police and crime, we excluded the `polpc` varaible from analysis. `avgsen` and `mix` are more along the lines of a crime outcome, rather than a predictor of crime in an area. We chose between `prbarr`, `prbcon`, and `prbpris` as these variables measure similar events and including all three would be redundant. We also briefly analyze location variables (`west`, `central`, `urban`) below, but chose not to include them in this analysis.
-
-Although our results are informative, no causal relationship can be drawn from our models. In general, regression itself does not imply causality; it's basis is in correlation. In this particular instance, this general rule holds. The data we have is observational, and no experiment was performed.
