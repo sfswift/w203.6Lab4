@@ -3,8 +3,8 @@ title: 'Lab 4: Reducing Crime'
 author: "Sullivan Swift, Jayanth Srinivasa"
 date: "December 4, 2017"
 output:
-  pdf_document: default
   word_document: default
+  pdf_document: default
   html_document:
     df_print: paged
 ---
@@ -18,8 +18,8 @@ library(sandwich)
 library(stargazer)
 
 #set working directory
-#setwd("C:/Users/Sullivan/Dropbox/W203/Lab 4")
-setwd("~/Desktop/data_w203/w203.6Lab4")
+setwd("C:/Users/Sullivan/Dropbox/W203/Lab 4")
+#setwd("~/Desktop/data_w203/w203.6Lab4")
 
 #load the data
 crime <- read.csv("crime.csv")
@@ -345,7 +345,7 @@ plot(model2, which=3)
 
 #breusch-pagan test
 bptest(model2)
-#score-test
+#score test
 ncvTest(model2)
 
 #heteroskedastic robust standard errors
@@ -392,7 +392,7 @@ We created one more model to include the previous covariates and along with the 
 (model3 <- lm(log_crmrte ~ log_density + log_pctymle + pctmin80 + med_wag + log_prbarr, data=crime))
 ```
 
-From the `model3`, we can say that as the population density increases by 1%, the crime rate goes up by 0.4799% with everything else being constant. Similarly, a percentage increase in the fraction of young males in the population by 1% increases the crime rate by 0.27% and an increase in minorities by 1% (compared to their population in 1980), causes an increase in crime-rate by 1.18%. Finally, the two new variables med_wage and probability of arrests, both have a negative effect on the crime rate. And as median wage increases by a unit of 1, the crime-rate decreases by 0.5% and as the probability of arrest goes up by 1%, the crime rate goes down by 0.24%.  
+From the `model3`, we can say that as the population density increases by 1%, the crime rate goes up by 0.4799% with everything else being constant. Similarly, a percentage increase in the fraction of young males in the population by 1% increases the crime rate by 0.27% and an increase in minorities by 1% (compared to their population in 1980), causes an increase in crime-rate by 1.18%. Finally, the two new variables `med_wage` and probability of arrests (`prbarr`), both have a negative effect on the crime rate. And as median wage increases by a unit of 1, the crime-rate decreases by 0.5% and as the probability of arrest goes up by 1%, the crime rate goes down by 0.24%.  
 
 As before, we confirm MLR3 with VIF and examine the plot of residuals vs fitted values to determine the the zero conditional mean assumption.
 
@@ -415,23 +415,23 @@ cov(crime$med_wag, model3$residuals)
 cov(crime$log_prbarr, model3$residuals)
 ```
 
-Again, the covariance between each of the independent variables and the model residuals are very small, and we again see exogeneity holds.
+Again, the covariance between each of the independent variables and the model residuals are very small, and we see exogeneity holds.
 
-Next we look at `model3`'s scale-location plot, Breusch-Pagan test, and the Score-test to assess homoskedasticity.
+Next we look at `model3`'s scale-location plot, Breusch-Pagan test, and the Non-constant Variance Score Test to assess homoskedasticity.
 
 ```{r}
 #scale-location plot
 plot(model3, which=3)
 #breusch-pagan test
 bptest(model3)
-#score-test
+#score test
 ncvTest(model3)
 
 #heteroskedastic robust standard error
 se.model3 = sqrt(diag(vcovHC(model3)))
 ```
 
-The graph clearly shows there are some outliers and there is no band in which the values are found. This shows that the variables are heteroskedactic. Further supporting this violation, the Breusch-Pagan test has significant p-value. We will be conservative and use the robust standard errors we have produced above to address any heteroskedacity in the data.
+The graph clearly shows there are some outliers, showing the variables are heteroskedastic. Further supporting this violation, the Non-constant Variance Score Test test has significant p-value ($p<.01$). The Breusch-Pagan test did not yeild significant results ($p>.05$) We will be conservative and use the robust standard errors we have produced above to address any heteroskedasticity in the data.
 
 Again, we examine a Q-Q plot of the residuals and the histogram of the residuals to determine the MLR6 assumption.
 
@@ -454,7 +454,7 @@ s3$coefficients[, 2] <- sqrt(diag(vcovHC(model3)))
 s3
 ```
 
-Though the rsquare value has improved to `s3$r.squared` and the adjusted R-square is `s3$adj.r.squared` in `model3`, it hasn't improved all that much in comparison to Model2 and does not justify the addition of the extra variables.
+Though the rsquare value has improved to `s3$r.squared` and the adjusted R-square is `s3$adj.r.squared` in `model3`, it hasn't improved all that much in comparison to `model2` and does not justify the addition of the extra variables.
 
 
 ```{r}
@@ -463,7 +463,7 @@ coeftest(model3, vcov = vcovHC)
 
 ## Comparison of Models
 
-We used the Stargazer library function to compare our three models. Though we see very little evidence of complete heteroskedacity, we would like to be conservative and we are using the robust standard errors for all the three models.
+We used the Stargazer library function to compare our three models. Though we see little evidence of complete heteroskedasticity, we would like to be conservative and we are using the robust standard errors for all the three models.
 
 ```{r}
 #model comparison output with stargazer
@@ -472,51 +472,41 @@ stargazer(model1, model2, model3, type = "text", omit.stat = "f",
           star.cutoffs = c(0.05, 0.01, 0.001))
 ```
 
-From the output above: 
+For `model1`, we see that the `log_density` is statistically significant at the $p<.001$ level. Also since we are examining the elasitic relationship between the crime rate and the density of population, we see that for 1% increase in the density of population results in an increase in `crmrte` bye 0.486%. Since this is a pretty observable effect, the `log_density` is practically significant too. 
 
-For `model1`, we see that the log_density is statistically significant at $p<.001$ level. Also since we are examining the elasitic relationship between the crimerate and the density of population, we see that for 1% increase in the density of population results in an increase in `crmrte` bye 0.486% . Since this is a pretty observable effect, the `log_density` is practically significant too. 
-
-For `model2`, we see that `log_density`, `log_pctymle`, and `pctmin80` are all statistically significant at the p < 0.001 level. This clearly indicates statistical significance. Also, given everything else is constant, the crime rate increases by 0.5% with every 1% increase in the density of population, increases by 0.38% for every 1% increase in the fraction of the young male population and finally the crimerate will increase by 1.2% when the minority population increases by 1% over the 1980 value. The value of change signifies a practical significance too. 
+For `model2`, we see that `log_density`, `log_pctymle`, and `pctmin80` are all statistically significant at the $p<.001$ level. This clearly indicates statistical significance. Also, given everything else is constant, the crime rate increases by 0.5% with every 1% increase in the density of population, increases by 0.38% for every 1% increase in the fraction of the young male population and finally the crimerate will increase by 1.2% when the minority population increases by 1% over the 1980 value. The value of change signifies a practical significance too. 
 
 For `model3`, we see that the `log_density`,  `pctmin80` are statistically significant at the p < 0.001 level, `log_pctymle` is statistically significant at the 0.01 level, but med_wag and log_prbarr are not statistically signficant. Practically, holding everything else constant, just increasing the density of the population by 1% increases the crime rate by 0.48%, only increasing the young male population by 1% causes an increase in crime rate by 0.27%, increasing the minority population by 1% increase crime rate by 1.2%. The median wage and the log_prbarr (log of probability of arrest) have a negative effect on the crime rate. That is as the median wage increases by 1 unit, the crime decreases by 1% and while the probability of arrest increases by 1%, the crime rate decreases by 0.25%.
 
-From the adjusted r-squared values we can clearly see an improvement from `model1` to `model2`. 
-While there is a modest increase in model3 when compared to model2, it does not justify the addition of two variables that are statistically insignificant. 
+From the adjusted r-squared values we can clearly see an improvement from `model1` to `model2`. However, while there is a modest increase in `model3` when compared to `model2`, it does not justify the addition of two variables that are statistically insignificant. 
 
 ## Conclusions and Implications
 
-Some model comparison
-
 Note that we did not analyze police per capita (`polpc`), probablility of conviction (`prbconv`), probability of prison sentence (`prbpris`), average sentance (`avgsen`), or the offense mix (`mix`). There are several reasons we exlcuded `polpc` from our analysis. First, the number of police officers may be highly dependent on how much crime occurs in an area, and second, a county's resources, or wealth, could impact the number of police. Since we already have measures for wealth, and due to this possible confounding relationship between police and crime, we excluded the `polpc` variable from analysis. `avgsen` and `mix` are more along the lines of a crime outcome, rather than a predictor of crime in an area. We chose between `prbarr`, `prbcon`, and `prbpris` as these variables measure similar events and including all three would be redundant. We also briefly analyze location variables (`west`, `central`, `urban`) below, but chose not to include them in this analysis.
 
+In order to determine the ommitted variable bias for the variables above, let us consider correlation with the other variables.
 
-In order to determine the ommitted variable bias for the `polpc`, let us consider correlation with the other variables.
 ```{r}
 #correlation matrix
 c <- with(crime, cor(cbind(crmrte, density, log_density, med_wag, taxpc, pctmin80, pctymle,log_pctymle, prbarr, polpc, mix, prbpris, prbconv)))
+
 c[-(1:9),]
 ```
 
-From the above analysis, we can see that the polpc is very mildly correlated to the other variables and since there is a positive correlation with crime rate and density, we may conclude there maybe a small positive ommitted variable bias.
+From the above analysis, we can see that the `polpc` is very mildly correlated to the other variables and since there is a positive correlation with crime rate and density, we may conclude there maybe a small positive ommitted variable bias.
 
-Since `prbarr` and `prbconv` are highly correlated, we did not consider `pbrconv` in our model3 analysis. 
-But `prbconv` is again negatively correlated with crimerate (`crmrte`) and if there is an ommitted variable bias, it would most likely be negative.
+Since `prbarr` and `prbconv` are highly correlated, we did not consider `pbrconv` in our model3 analysis. But `prbconv` is again negatively correlated with crimerate (`crmrte`) and if there is an ommitted variable bias, it would most likely be negative.
 
-Similarly the `mix` and `prbpris` are again negatively correlated with crime and it is reasonable to assume, that there maybe a slight ommitted variable bias which is negative.
+Similarly the `mix` and `prbpris` are again negatively correlated with crime and it is reasonable to assume, that there maybe a slight negative ommitted variable bias.
 
+The dataset also does not contain any variable that directly corresponds to employment. While, there are financial variables, it is reasonable to assume that in areas of high employment the crime rate would be low. Lack of employment data creates a bias and since it is reasonable to that it employment would be negatively associated to `crmrte`, we can conclude a negative ommitted variable bias.
 
-The dataset also does not contain any variable that directly corresponds to employment. While, there are financial variables, it is reasonable to conclude that in areas of high employment the crime rate would be low. This is definitely an ommitted bias and since it is reasonable to conclude that it employment would be negatively correlated to `crmrte`, we can conclude a negative ommitted variable bias.
+From our analysis, we can see that the variables `log_density`, `log_pctymle` and `pctmin80` had the biggest impact on `crmrte`. Although these results are informative, no causal relationship can be drawn from our models. In general, regression itself does not imply causality; it's basis is in correlation. In this particular instance, this general rule holds. The data we have is observational, and no experiment was performed. However, we can still see that population density, demographics, and crime rate have a relationship. 
 
+Also  in `model3`, we observe that the median wage has a negative slope (while not significant statistically), we can hypothesize that increasing the median wage may decrease crime rate. 
 
-
-A brief conclusion with a few high-level takeaways.
-
-From our analysis, we can conclude that the variables `log_density`, `log_pctymle` and `pctmin80` had the biggest impact on `crmrte`. Although these results are informative, no causal relationship can be drawn from our models. In general, regression itself does not imply causality; it's basis is in correlation. In this particular instance, this general rule holds. The data we have is observational, and no experiment was performed. However, we can still see that population density, demographics, and crime rate have a relationship. 
-
-Also  in model3, we observe that the median wage has a negative slope (while not significant statistically), we can conclude that increasing the median wage may decrease crime rate. 
 Now, since we cannot reduce the density of population in counties, we may need to look at the reasons for increased density, causing an increase in crime rate. It maybe a good idea, to ensure economic development to reduce the crime rate. 
-While there is a positive relation between the crime rate and the  percentage young males in society, we cannot reduce the percentage of young males, it maybe worthwhile in considering programs to improve their employability and increase their employment opporturnites as this may reduce the crime rate. 
-Similarly with minorities, ensuring their economic upliftment and employability may reduce their impact on the crimerate.
 
+While there is a positive relation between the crime rate and the  percentage young males in society, we cannot reduce the percentage of young males, it maybe worthwhile in considering programs to improve their employability and increase their employment opporturnites as this may reduce the crime rate. Similarly with minorities, ensuring their economic upliftment and employability may reduce any impact on the crimerate.
 
-In conclusion,the crime-rate in NC is a complex issue dependent on may variables - some of which cannot be controlled. But there can be certain social and economic programs put in place to reduce the impact of sociological (?) factors that contribute to an increase in crime rate.
+In conclusion,the crime-rate in NC is a complex issue dependent on may variables - some of which cannot be controlled. But there can be certain social and economic programs put in place to reduce the impact of factors that may contribute to an increase in crime rate.
