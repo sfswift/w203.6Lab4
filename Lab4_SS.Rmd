@@ -19,8 +19,7 @@ library(stargazer)
 
 #set working directory
 #setwd("C:/Users/Sullivan/Dropbox/W203/Lab 4")
-#setwd("~/Desktop/data_w203/w203.6Lab4")
-setwd("C:/Users/sswift/Desktop/hw")
+setwd("~/Desktop/data_w203/w203.6Lab4")
 
 #load the data
 crime <- read.csv("crime.csv")
