@@ -18,8 +18,8 @@ library(sandwich)
 library(stargazer)
 
 #set working directory
-setwd("C:/Users/Sullivan/Dropbox/W203/Lab 4")
-#setwd("~/Desktop/data_w203/w203.6Lab4")
+#setwd("C:/Users/Sullivan/Dropbox/W203/Lab 4")
+setwd("~/Desktop/data_w203/w203.6Lab4")
 
 #load the data
 crime <- read.csv("crime.csv")
@@ -309,14 +309,9 @@ Next, we wanted to expand our model with more independent variables, and we chos
 
 From examining the coefficients we see that, with everything else being held a constant an increase of 1% in `density`, we see an increase of 0.5% in the crime rate. Similary, an increase in `pctymle` with everything else being constant, produces an increase of crime rate by 0.38% and finally any increase of minority population by 1 unit, results in a nearly 1% increase in the crime rate. 
 
-<<<<<<< HEAD
-Now let us check the remaining assumptions. First, we will examine the zero conditional mean assumption by looking at the plot of residuals vs fitted values.
-=======
-Now let us check the assumptions of the CLM. 
 
+Now let us check the remaining assumptions of CLM. First, we will examine the zero conditional mean assumption by looking at the plot of residuals vs fitted values.
 
-Let us examine the zero conditional mean assumption by looking at the plot of residuals vs fitted values.
->>>>>>> f79207e58203e9253767144cfa3cff89e03bbdbd
 
 ```{r}
 #residuals v fitted values plot
