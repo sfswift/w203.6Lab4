@@ -311,6 +311,7 @@ Next, we wanted to expand our model with more independent variables, and we chos
 
 From examining the coefficients we see that, with everything else being held a constant an increase of 1% in `density`, we see an increase of 0.5% in the crime rate. Similary, an increase in `pctymle` with everything else being constant, produces an increase of crime rate by 0.38% and finally any increase of minority population by 1 unit, results in a nearly 1% increase in the crime rate. 
 
+<<<<<<< HEAD
 Now let us check the remaining assumptions. First, we will examine the zero conditional mean assumption by looking at the plot of residuals vs fitted values.
 =======
 Now let us check the assumptions of the CLM. 
@@ -356,11 +357,6 @@ The Breusch-Pagan test did not yeild significant results ($p>.05$), but the Non-
 
 To test the normality of the errors, we examined the Q-Q plot of the residuals and the histogram of the residuals.
 
-=======
-The graph clearly shows there are some outliers to the left edge and the band seems to narrow as we move to the right.
-Further supporting this violation, the Breusch-Pagan test has a significant p-value. We will be conservative and use the robust standard errors we have produced above to address any heteroskedacity in the data.
-To test the normality of the errors, let us examine a qqplot of the residuals and the histogram of the residuals.
->>>>>>> f79207e58203e9253767144cfa3cff89e03bbdbd
 ```{r}
 #qq plot
 plot(model2, which=2)
@@ -373,11 +369,6 @@ hist(model2$residuals, breaks=50,
 The Q-Q plot has some variation around the ends, and both the histogram and the Q-Q plot contain an outlier to the far right. The histogram of the residuals is fairly normal, except for the outlier on the far right. `model2` has more variation in the residuals than `model1`, but the evidence is strong enough to support making the MLR6 assumption.
 
 Finally we can examine the summary command, using our heteroskedasticity robust standard errors from above.
-=======
-From the above graphs, it is clearly that the errors are mostly normal, except in the extremes where we see a few outliers. But it is pretty clear that the assumption is true. 
-
-Finally examining the summary of model2 and using the standard errors : 
->>>>>>> f79207e58203e9253767144cfa3cff89e03bbdbd
 
 ```{r}
 s2 <- summary(model2)
@@ -390,9 +381,6 @@ That the rsquare value has improved to `s2$r.squared` and the adjusted R-square 
 ### Model 3
 
 We created one more model to include the previous covariates and along with the probability of arrests (`prbarr`) and the median wage (`med_wag`) to assess the robustness of our first models.
-=======
-Now, let us examine a model, that includes the previous covariates and along with the probability of arrests (`prbarr`) and the median wage (`med_wag`) to assess the robustness of our original models. Also from the initial analysis of `prbarr`, we concluded that the sample distribution is skewed and it would better to use the log transformed variable. 
->>>>>>> f79207e58203e9253767144cfa3cff89e03bbdbd
   
 ```{r}
 #create the model
