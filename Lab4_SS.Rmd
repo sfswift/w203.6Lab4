@@ -464,7 +464,7 @@ For `model2`, we see that `log_density`, `log_pctymle`, and `pctmin80` are all s
 
 For `model3`, we see that the `log_density`,  `pctmin80` are statistically significant at the p < 0.001 level, `log_pctymle` is statistically significant at the 0.01 level, but med_wag and log_prbarr are not statistically signficant. Practically, holding everything else constant, just increasing the density of the population by 1% increases the crime rate by 0.48%, only increasing the young male population by 1% causes an increase in crime rate by 0.27%, increasing the minority population by 1% increase crime rate by 1.2%. The median wage and the log_prbarr (log of probability of arrest) have a negative effect on the crime rate. That is as the median wage increases by 1 unit, the crime decreases by 1% and while the probability of arrest increases by 1%, the crime rate decreases by 0.25%.
 
-From the adjusted r-squared values we can clearly see an improvement from model1 to model2. 
+From the adjusted r-squared values we can clearly see an improvement from `model1` to `model2`. 
 While there is a modest increase in model3 when compared to model2, it does not justify the addition of two variables that are statistically insignificant. 
 
 ## Conclusions and Implications
